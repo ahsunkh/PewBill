@@ -1,0 +1,125 @@
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from loginAndRegister.models import Roles, Users
+from loginAndRegister.serializers import UsersSerializer
+
+from pewbill.responses import Response, ERROR_STATUS_CODE_CONFLICT, ERROR_STATUS_CODE_FORBIDDEN, SUCCESS_STATUS_CODE, \
+    ERROR_STATUS_CODE
+from pewbill.responsesdescription import USER_ALREADY_EXISTS, USER_DOES_NOT_CREATED, INVALID_EMAIL_ADDRESS, \
+    USER_DOES_NOT_EXIST, OTP_SENT_ON_EMAIl, TRY_AGAIN, USER_NOT_UPDATED
+from scripts.sendEmail import SendEmail
+from template.o_template import PewBillTemplate
+from utilities.otp import PewBillOTP
+from utilities.pewbill_jwt import PewBillJWT
+
+
+def user_signup_email(data):
+    try:
+        if Users.check_email_user(email=data.get("email")):
+            return Response.error(error_response=USER_ALREADY_EXISTS, status=ERROR_STATUS_CODE_CONFLICT)
+        password = generate_password_hash(data.get('password'))
+        data["password"] = password
+        users = Users().create_email_user(data=data)
+        return Response.success("user created")
+        return Response.error(error_response=USER_DOES_NOT_CREATED, status=ERROR_STATUS_CODE_FORBIDDEN)
+
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def user_signin_email(data):
+    try:
+        email = data.get("email", None)
+        if Users.check_email_user(email=email):
+            users = Users.get_user_by_email(email=email)
+            tfa = users.two_factor_auth
+            hash = users.password
+            if check_password_hash(pwhash=hash, password=data['password']):
+                if tfa:
+                    send_otp = PewBillOTP().create_otp(data['email'])
+                    content = PewBillTemplate().otp_mail_template_func(otp=send_otp)
+                    subject = "Welcome to Email User Signin"
+                    if SendEmail.send_email(reciever=email, subject=subject, content=content, name="PewBill"):
+                        return Response.success(OTP_SENT_ON_EMAIl)
+                    return Response.error(INVALID_EMAIL_ADDRESS)
+
+                access, refresh = PewBillJWT().create_jwt(users)
+                users_serializer = UsersSerializer(users).data
+                users_serializer.update({"access_token": access,
+                                         "refresh_token": str(refresh),
+                                         })
+                users.jwt_token.append(access)
+                users.save()
+                return Response.create_data(created_data_response=users_serializer, status=SUCCESS_STATUS_CODE)
+                return Response.error(INVALID_EMAIL_ADDRESS)
+            return Response.error("invalid password")
+        return Response.error(USER_DOES_NOT_EXIST)
+
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def verify_user_email_signin_otp(data):
+    try:
+        email_data = {"otp": data.get('otp'), "email": data.get('email')}
+        if PewBillOTP().verify_otp_email(data=email_data):
+            user = Users.get_user_by_email(email=data.get('email'))
+            access, refresh = PewBillJWT().create_jwt(user)
+            user_serializer = UsersSerializer(user).data
+            user_serializer.update({"token": access,
+                                    "refresh": str(refresh),
+                                    "platform": "email"})
+            user.jwt_token.append(access)
+            user.save()
+            return Response.create_data(created_data_response=user_serializer, status=SUCCESS_STATUS_CODE)
+        return Response.error(TRY_AGAIN)
+    except Exception as err:
+        raise
+        return Response.internal_server_error(str(err))
+
+
+def update_user(id=None, request=None):
+    try:
+        data = request.data
+        data.update({"id": id})
+        password = generate_password_hash(data.get('password'))
+        data["password"] = password
+        is_updated, user = Users.update_model_user(type=data)
+        if is_updated:
+            user_serializer = UsersSerializer(user).data
+            return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
+        return Response.error(error_response=USER_NOT_UPDATED, status=ERROR_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def forget_password_action(data):
+    try:
+        user = Users.get_user_by_email(email=data.get('email'))
+        password = generate_password_hash(data['password'])
+        user.password = password
+        user.save()
+        user_serializer = UsersSerializer(user, many=False).data
+        return user_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+def delete_user(id):
+    try:
+        Users.delete_single_user(pk=id)
+        return Response.success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+def add_roles_on_first_migrate():
+    try:
+        # Roles = getloop2.get_model('schema', 'Roles')
+        default_roles_data = [{"id": 1, "role": "admin", "details": "an administration user"},
+                              {"id": 2, "role": "user", "details": "a normal user"}]
+        Roles.objects.bulk_create(Roles(**values) for values in default_roles_data)
+        if (Roles.objects.all().count()) == len(default_roles_data):
+            print("All roles successfully added")
+            return
+        print("Some roles may not created please check")
+    except Exception as e:
+        print("Roles not created", e)
