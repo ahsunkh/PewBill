@@ -1,6 +1,7 @@
 import jwt
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from loginAndRegister.models import Users
 from pewbill.settings import SECRET_KEY
 
 
@@ -16,4 +17,9 @@ class PewBillJWT():
 
     def parse_token(self, token):
         token = token.split(" ")[1]
-        return jwt.decode(token, SECRET_KEY, algorithms=["HS512"])['id'], token
+        if self.check_token(jwt.decode(token, SECRET_KEY, algorithms=["HS512"])['id'], token):
+            return jwt.decode(token, SECRET_KEY, algorithms=["HS512"])['id'], token
+        return None, {}
+
+    def check_token(self, user_id, token):
+        return Users().is_token_exists(user_id=user_id, token=token)

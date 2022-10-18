@@ -4,13 +4,23 @@ from loginAndRegister.models import Roles, Users
 from loginAndRegister.serializers import UsersSerializer
 
 from pewbill.responses import Response, ERROR_STATUS_CODE_CONFLICT, ERROR_STATUS_CODE_FORBIDDEN, SUCCESS_STATUS_CODE, \
-    ERROR_STATUS_CODE
+    ERROR_STATUS_CODE, ERROR_STATUS_CODE_NOT_FOUND
 from pewbill.responsesdescription import USER_ALREADY_EXISTS, USER_DOES_NOT_CREATED, INVALID_EMAIL_ADDRESS, \
-    USER_DOES_NOT_EXIST, OTP_SENT_ON_EMAIl, TRY_AGAIN, USER_NOT_UPDATED
+    USER_DOES_NOT_EXIST, OTP_SENT_ON_EMAIl, TRY_AGAIN, USER_NOT_UPDATED, LOG_OUT_SUCCESSFULLY, TOKEN_NOT_VALID
 from scripts.sendEmail import SendEmail
 from template.o_template import PewBillTemplate
 from utilities.otp import PewBillOTP
 from utilities.pewbill_jwt import PewBillJWT
+
+
+def build_user_name(first_name, last_name):
+    username = (first_name.lower())[::] + '_' + (last_name.lower())[:1]
+    counter = 1
+
+    while Users.check_user_by_username(username=username):
+        username = username + str(counter)
+        counter = counter + 1
+    return username
 
 
 def user_signup_email(data):
@@ -19,8 +29,11 @@ def user_signup_email(data):
             return Response.error(error_response=USER_ALREADY_EXISTS, status=ERROR_STATUS_CODE_CONFLICT)
         password = generate_password_hash(data.get('password'))
         data["password"] = password
-        users = Users().create_email_user(data=data)
-        return Response.success("user created")
+        user_name = build_user_name(first_name=data['first_name'], last_name=data['last_name'])
+        data.update({"user_name": user_name})
+        users = Users.create_email_user(data=data)
+        if users:
+            return Response.success("user created")
         return Response.error(error_response=USER_DOES_NOT_CREATED, status=ERROR_STATUS_CODE_FORBIDDEN)
 
     except Exception as err:
@@ -104,12 +117,28 @@ def forget_password_action(data):
     except Exception as err:
         return Response.internal_server_error(str(err))
 
+
 def delete_user(id):
     try:
         Users.delete_single_user(pk=id)
         return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
+
+
+def logout_user(user_id=None, token=None):
+    try:
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
+        if token in user.jwt_token:
+            user.jwt_token.remove(token)
+            user.save()
+            return Response.success(LOG_OUT_SUCCESSFULLY)
+        return Response.error(TOKEN_NOT_VALID)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
 
 def add_roles_on_first_migrate():
     try:

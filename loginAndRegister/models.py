@@ -35,13 +35,29 @@ class Users(models.Model):
         return None
 
     @staticmethod
+    def build_user_name(first_name, last_name):
+        username = (first_name.lower())[::] + '_' + (last_name.lower())[:1]
+        counter = 1
+
+        while Users.check_user_by_username(username=username):
+            username = username + str(counter)
+            counter = counter + 1
+        return username
+
+    @staticmethod
+    def is_token_exists(token=None, user_id=None):
+        user = Users.objects.get(id=user_id)
+        if token in user.jwt_token:
+            return True
+        return False
+
+    @staticmethod
     def create_email_user(data=None):
         try:
             if data is not None:
                 return Users.objects.create(**data)
-            return None
         except Exception as err:
-            return Response.internal_server_error(str(err))
+            return False
 
     @staticmethod
     def get_user_by_email(email=None):
@@ -65,6 +81,16 @@ class Users(models.Model):
         user = Users.objects.get(id=pk)
         user.delete()
 
+    @staticmethod
+    def get_user_by_id(id=None):
+        if id is not None:
+            return Users.objects.get(id=id)
+        return False
+
+    @staticmethod
+    def check_user_by_username(username=None):
+        return Users.objects.filter(user_name=username).exists()
+
 
 class Company(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False)
@@ -73,13 +99,112 @@ class Company(models.Model):
     phone = models.CharField(max_length=15, default='')
     email = models.EmailField(null=False, blank=False)
 
+    @staticmethod
+    def get_company():
+        return Company.objects.all()
+
+    @staticmethod
+    def create_company(data):
+        try:
+            if data is not None:
+                return Company.objects.create(**data)
+        except:
+            return Response.error("invalid request")
+
+    @staticmethod
+    def update_company(type=None):
+        if type is not None:
+            try:
+                Company.objects.filter(id=type.get('id')).update(**type)
+                company = Company.objects.get(id=type.get('id'))
+                return True, company
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_company(pk):
+        company = Company.objects.get(pk=pk)
+        return company
+
+    @staticmethod
+    def delete_single_company(pk):
+        company = Company.objects.get(pk=pk)
+        company.delete()
+
 
 class Category(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False)
     description = models.CharField(max_length=200, null=False, blank=False)
+
+    @staticmethod
+    def get_category():
+        return Category.objects.all()
+
+    @staticmethod
+    def create_category(data):
+        try:
+            if data is not None:
+                return Category.objects.create(**data)
+        except:
+            return Response.error("invalid request")
+
+    @staticmethod
+    def update_category(type=None):
+        if type is not None:
+            try:
+                Category.objects.filter(id=type.get('id')).update(**type)
+                category = Category.objects.get(id=type.get('id'))
+                return True, category
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_category(pk):
+        category = Category.objects.get(pk=pk)
+        return category
+
+    @staticmethod
+    def delete_single_category(pk):
+        category = Category.objects.get(pk=pk)
+        category.delete()
 
 
 class Product(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False)
     unit_price = models.CharField(max_length=100, null=False, blank=False)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    @staticmethod
+    def get_product():
+        return Product.objects.all()
+
+    @staticmethod
+    def create_product(data):
+        try:
+            if data is not None:
+                return Product.objects.create(**data)
+        except:
+            return Response.error("invalid request")
+
+    @staticmethod
+    def update_product(type=None):
+        if type is not None:
+            try:
+                Product.objects.filter(id=type.get('id')).update(**type)
+                product = Product.objects.get(id=type.get('id'))
+                return True, product
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_product(pk):
+        product = Product.objects.get(pk=pk)
+        return product
+
+    @staticmethod
+    def delete_single_product(pk):
+        product = Product.objects.get(pk=pk)
+        product.delete()

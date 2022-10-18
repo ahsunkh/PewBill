@@ -1,6 +1,6 @@
 # Success Response Descriptions
 OTP_SENT_ON_EMAIl = "Please find otp on your email"
-
+LOG_OUT_SUCCESSFULLY = "Log out Successful"
 
 # Unsuccessful Response Descriptions
 
@@ -11,5 +11,6 @@ USER_DOES_NOT_CREATED = "User does not created"
 INVALID_EMAIL_ADDRESS = "Invalid email address"
 TRY_AGAIN = "Please try again"
 TOKEN_NOT_VALID = "Token is not valid"
-TYPE_NOT_UPDATED = "Type doesn't update"
+COMPANY_NOT_UPDATED = "Company doesn't update"
+PRODUCT_NOT_UPDATED = "Product doesn't update"
 USER_NOT_UPDATED = "User doesn't update"

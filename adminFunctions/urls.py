@@ -1,23 +1,14 @@
+from django.urls import path
 
+from adminFunctions import views
 
+urlpatterns = [
+    path('get/company', views.CompanyGet.as_view()),
+    path('company/detail/<pk>', views.CompanyDetail.as_view()),
 
+    path('get/category', views.CategoryGet.as_view()),
+    path('category/detail/<pk>', views.CategoryDetail.as_view()),
 
-
-
-
-
-
-
-def add_roles_on_first_migrate():
-    try:
-        # Roles = getloop2.get_model('schema', 'Roles')
-        default_roles_data = [{"id": 1, "role": "admin", "details": "an administration user"},
-                              {"id": 2, "role": "user", "details": "a normal user"},
-                              {"id": 3, "role": "agent", "details": "an agent user for any money exchange"}]
-        Roles.objects.bulk_create(Roles(**values) for values in default_roles_data)
-        if (Roles.objects.all().count()) == len(default_roles_data):
-            print("All roles successfully added")
-            return
-        print("Some roles may not created please check")
-    except Exception as e:
-        print("Roles not created", e)
+    path('get/product', views.ProductGet.as_view()),
+    path('product/detail/<pk>', views.ProductDetail.as_view()),
+]

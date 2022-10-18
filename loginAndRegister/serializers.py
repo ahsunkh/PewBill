@@ -16,6 +16,3 @@ class UsersSerializer(serializers.ModelSerializer):
         exclude = ['password', 'jwt_token']
 
 
-class CompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Company
