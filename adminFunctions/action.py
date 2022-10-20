@@ -1,8 +1,31 @@
-from loginAndRegister.models import Company, Category, Product
-from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer
+# import Paginator as Paginator
+
+from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OderDetail
+from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
+    PurchaseOrderSerializer, OderDetailSerializer
+from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
 from django.http import JsonResponse
+from django.core.paginator import Paginator
+
+
+def get_all_user_pagination(page, limit):
+    try:
+        user = Users.get_user()
+        paginator = Paginator(user, limit)
+        number_of_pages = paginator.num_pages
+        total_users = paginator.count
+        page_number = page
+        user_final = paginator.get_page(page_number)
+        user_serializer = UsersSerializer(user_final, many=True).data
+        user_serializer.append({"total_pages": number_of_pages,
+                                "total_users": total_users})
+
+        return user_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
 
 """ Company Action 
     so it providing company functions"""
@@ -155,6 +178,109 @@ def get_single_product(id):
 def delete_product(id):
     try:
         Product.delete_single_product(pk=id)
+        return Response.create_success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+""" Purchase Order Action 
+    so it providing purchase order functions"""
+
+
+def get_all_purchase_order():
+    try:
+        purchase_order = PurchaseOrder().get_purchase_order()
+        purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=True).data
+        return purchase_order_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def create_purchase_order_act(data):
+    try:
+        purchase_order = PurchaseOrder().create_purchase_order(data=data)
+        purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
+        return Response.create_data(purchase_order_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def update_purchase_order_act(id=None, request=None):
+    try:
+        data = request.data
+        data.update({"id": id})
+        is_updated, purchase_order = PurchaseOrder().update_purchase_order(type=data)
+        if is_updated:
+            purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
+            return Response.create_data(purchase_order_serializer, status=SUCCESS_STATUS_CODE)
+        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_single_purchase_order(id):
+    try:
+        purchase_order = PurchaseOrder().get_one_purchase_order(pk=id)
+        purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=False).data
+        return JsonResponse(purchase_order_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def delete_purchase_order(id):
+    try:
+        PurchaseOrder.delete_single_purchase_order(pk=id)
+        return Response.create_success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+""" Oder Detail Action 
+    so it providing oder detail functions"""
+
+
+def get_all_order_detail():
+    try:
+        order_detail = OderDetail().get_order_detail()
+        order_detail_serializer = OderDetailSerializer(order_detail, many=True).data
+        return order_detail_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def create_order_detail_act(data):
+    try:
+        order_detail = OderDetail().create_order_detail(data=data)
+        order_detail_serializer = OderDetailSerializer(order_detail).data
+        return Response.create_data(order_detail_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def update_order_detail_act(id=None, request=None):
+    try:
+        data = request.data
+        data.update({"id": id})
+        is_updated, order_detail = OderDetail().update_order_detail(type=data)
+        if is_updated:
+            order_detail_serializer = OderDetailSerializer(order_detail).data
+            return Response.create_data(order_detail_serializer, status=SUCCESS_STATUS_CODE)
+        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+def get_single_order_detail(id):
+    try:
+        order_detail = OderDetail().get_one_order_detail(pk=id)
+        order_detail_serializer = OderDetailSerializer(order_detail, many=False).data
+        return JsonResponse(order_detail_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def delete_order_detail(id):
+    try:
+        OderDetail().delete_single_order_detail(pk=id)
         return Response.create_success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))

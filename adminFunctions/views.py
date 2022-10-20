@@ -1,17 +1,35 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
+from permissions import IsAdminUser
 from pewbill.responses import Response
 from pewbill.responsesdescription import INVALID_DATA
 from utilities.pewbill_jwt import PewBillJWT
 from adminFunctions.action import *
-    # get_all_company, create_company_act, update_company, get_single_company, delete_company, \
-    # get_all_category, create_category_act, get_single_category, delete_category, get_all_product, \
-    # create_product_act, update_category_act, update_company_act
+
+
+# get_all_company, create_company_act, update_company, get_single_company, delete_company, \
+# get_all_category, create_category_act, get_single_category, delete_category, get_all_product, \
+# create_product_act, update_category_act, update_company_act
+
+
+class UserManagement(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                page = request.GET['page']
+                limit = request.GET['limit']
+                return Response.create_data(get_all_user_pagination(page=page, limit=limit))
+        except Exception as err:
+            return Response.error(str(err))
 
 
 class CompanyGet(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     def get(request):
@@ -38,7 +56,7 @@ class CompanyGet(APIView):
 
 
 class CompanyDetail(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     # @content_type_validation
@@ -77,7 +95,7 @@ class CompanyDetail(APIView):
 
 
 class CategoryGet(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     def get(request):
@@ -103,7 +121,7 @@ class CategoryGet(APIView):
 
 
 class CategoryDetail(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     # @content_type_validation
@@ -142,7 +160,7 @@ class CategoryDetail(APIView):
 
 
 class ProductGet(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     def get(request):
@@ -168,7 +186,7 @@ class ProductGet(APIView):
 
 
 class ProductDetail(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     # @content_type_validation
@@ -192,7 +210,6 @@ class ProductDetail(APIView):
         except Exception as err:
             return Response.error(str(err))
 
-
     @staticmethod
     # @content_type_validation
     def delete(request, pk=None):
@@ -200,6 +217,134 @@ class ProductDetail(APIView):
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
                 return delete_product(id=pk)
+        except Exception as err:
+            return Response.error(str(err))
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class PurchaseOrderGet(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_all_purchase_order())
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    # @content_type_validation
+    def post(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return create_purchase_order_act(data=request.data)
+
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class PurchaseOrderDetail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    # @content_type_validation
+    def put(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return update_purchase_order_act(id=pk, request=request)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_purchase_order(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def delete(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return delete_purchase_order(id=pk)
+        except Exception as err:
+            return Response.error(str(err))
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class OderDetailGet(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_all_order_detail())
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    # @content_type_validation
+    def post(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return create_order_detail_act(data=request.data)
+
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class OrderDetailDetail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def put(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return update_order_detail_act(id=pk, request=request)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_order_detail(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+    @staticmethod
+    def delete(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return delete_order_detail(id=pk)
         except Exception as err:
             return Response.error(str(err))
             return Response.error(INVALID_DATA)

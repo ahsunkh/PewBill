@@ -29,6 +29,13 @@ class Users(models.Model):
     two_factor_auth = models.BooleanField(blank=False, default=False)
 
     @staticmethod
+    def get_user():
+        try:
+            return Users.objects.filter(role=2)
+        except:
+            return None
+
+    @staticmethod
     def check_email_user(email=None):
         if email is not None:
             return Users.objects.filter(email=email).exists()
@@ -208,3 +215,85 @@ class Product(models.Model):
     def delete_single_product(pk):
         product = Product.objects.get(pk=pk)
         product.delete()
+
+
+class PurchaseOrder(models.Model):
+    purchase_order_number = models.CharField(null=False, blank=False, max_length=100)
+    purchase_order_date = models.CharField(null=False, blank=False, max_length=100)
+    delivery_date = models.CharField(null=False, blank=False, max_length=100)
+    quantity = models.IntegerField(default=0)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
+    total_amount = models.CharField(max_length=100, blank=True)
+
+    @staticmethod
+    def get_purchase_order():
+        return PurchaseOrder.objects.all()
+
+    @staticmethod
+    def create_purchase_order(data):
+        try:
+            if data is not None:
+                return PurchaseOrder.objects.create(**data)
+        except:
+            return Response.error("invalid request")
+
+    @staticmethod
+    def update_purchase_order(type=None):
+        if type is not None:
+            try:
+                PurchaseOrder.objects.filter(id=type.get('id')).update(**type)
+                purchase_order = PurchaseOrder.objects.get(id=type.get('id'))
+                return True, purchase_order
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_purchase_order(pk):
+        purchase_order = PurchaseOrder.objects.get(pk=pk)
+        return purchase_order
+
+    @staticmethod
+    def delete_single_purchase_order(pk):
+        purchase_order = PurchaseOrder.objects.get(pk=pk)
+        purchase_order.delete()
+
+
+class OderDetail(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    price = models.FloatField()
+    quantity = models.CharField(max_length=100, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    @staticmethod
+    def get_order_detail():
+        return OderDetail.objects.all()
+
+    @staticmethod
+    def create_order_detail(data):
+        try:
+            if data is not None:
+                return OderDetail.objects.create(**data)
+        except:
+            return Response.error("invalid request")
+
+    @staticmethod
+    def update_order_detail(type=None):
+        if type is not None:
+            try:
+                OderDetail.objects.filter(id=type.get('id')).update(**type)
+                order_detail = OderDetail.objects.get(id=type.get('id'))
+                return True, order_detail
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_order_detail(pk):
+        return OderDetail.objects.get(pk=pk)
+
+    @staticmethod
+    def delete_single_order_detail(pk):
+        order_detail = OderDetail.objects.get(pk=pk)
+        order_detail.delete()

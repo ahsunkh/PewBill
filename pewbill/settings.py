@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'adminFunctions',
     'rest_framework.authtoken',
     'corsheaders',
+
 ]
 
 MIDDLEWARE = [

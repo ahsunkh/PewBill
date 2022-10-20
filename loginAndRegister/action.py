@@ -64,7 +64,6 @@ def user_signin_email(data):
                 users.jwt_token.append(access)
                 users.save()
                 return Response.create_data(created_data_response=users_serializer, status=SUCCESS_STATUS_CODE)
-                return Response.error(INVALID_EMAIL_ADDRESS)
             return Response.error("invalid password")
         return Response.error(USER_DOES_NOT_EXIST)
 
@@ -87,7 +86,6 @@ def verify_user_email_signin_otp(data):
             return Response.create_data(created_data_response=user_serializer, status=SUCCESS_STATUS_CODE)
         return Response.error(TRY_AGAIN)
     except Exception as err:
-        raise
         return Response.internal_server_error(str(err))
 
 
