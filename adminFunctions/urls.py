@@ -19,4 +19,20 @@ urlpatterns = [
 
     path('get/orderdetail', views.OderDetailGet.as_view()),
     path('oderdetail/detail/<pk>', views.OrderDetailDetail.as_view()),
+
+    path('get/challan', views.ChallanGet.as_view()),
+    path('challan/detail/<pk>', views.BillDetail.as_view()),
+
+    path('get/bill', views.BillGet.as_view()),
+    path('bill/detail/<pk>', views.BillDetail.as_view()),
+
+
+
+
+
+
+
+
+
+
 ]

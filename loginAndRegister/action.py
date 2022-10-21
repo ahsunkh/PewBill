@@ -68,6 +68,7 @@ def user_signin_email(data):
         return Response.error(USER_DOES_NOT_EXIST)
 
     except Exception as err:
+        raise
         return Response.internal_server_error(str(err))
 
 
