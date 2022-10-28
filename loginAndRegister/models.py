@@ -74,11 +74,11 @@ class Users(models.Model):
         return False
 
     @staticmethod
-    def update_model_user(type=None):
+    def update_model_user(id=None, update_data=None):
         if type is not None:
             try:
-                Users.objects.filter(id=type.get('id')).update(**type)
-                user = Users.objects.get(id=type.get('id'))
+                Users.objects.filter(id=id).update(**update_data)
+                user = Users.objects.get(id=id)
                 return True, user
             except Exception as err:
                 return False, {}

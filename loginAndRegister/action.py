@@ -1,3 +1,5 @@
+import json
+import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from loginAndRegister.models import Roles, Users
@@ -7,6 +9,7 @@ from pewbill.responses import Response, ERROR_STATUS_CODE_CONFLICT, ERROR_STATUS
     ERROR_STATUS_CODE, ERROR_STATUS_CODE_NOT_FOUND
 from pewbill.responsesdescription import USER_ALREADY_EXISTS, USER_DOES_NOT_CREATED, INVALID_EMAIL_ADDRESS, \
     USER_DOES_NOT_EXIST, OTP_SENT_ON_EMAIl, TRY_AGAIN, USER_NOT_UPDATED, LOG_OUT_SUCCESSFULLY, TOKEN_NOT_VALID
+from pewbill.settings import OCR_SPACE_API_KEY
 from scripts.sendEmail import SendEmail
 from template.o_template import PewBillTemplate
 from utilities.otp import PewBillOTP
@@ -90,13 +93,23 @@ def verify_user_email_signin_otp(data):
         return Response.internal_server_error(str(err))
 
 
-def update_user(id=None, request=None):
+def update_user(id=None, data=None):
     try:
-        data = request.data
-        data.update({"id": id})
-        password = generate_password_hash(data.get('password'))
-        data["password"] = password
-        is_updated, user = Users.update_model_user(type=data)
+
+        if 'email' in data:
+            return Response.error(error_response="You can not update your email",
+                                  status=ERROR_STATUS_CODE)
+
+        if 'password' in data:
+            dict_a = {}
+            password = generate_password_hash(data.get('password'))
+            dict_a["password"] = password
+            is_updated, user = Users.update_model_user(id=id, update_data=dict_a)
+            if is_updated:
+                user_serializer = UsersSerializer(user).data
+                return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
+
+        is_updated, user = Users.update_model_user(id=id, update_data=data)
         if is_updated:
             user_serializer = UsersSerializer(user).data
             return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
@@ -151,3 +164,67 @@ def add_roles_on_first_migrate():
         print("Some roles may not created please check")
     except Exception as e:
         print("Roles not created", e)
+
+
+def get_po_data_for_company_a(data):
+    try:
+        po_number = data['ParsedResults'][0]['TextOverlay']['Lines'][4]['LineText']
+        purchase_order_date = data['ParsedResults'][0]['TextOverlay']['Lines'][6]['LineText']
+        data = {"purchase_order_number": po_number[-7::],
+                "purchase_order_date": purchase_order_date}
+        print(data)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_po_data_for_company_b(data):
+    try:
+        pass
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_po_data_for_company_c(data):
+    try:
+        print("CCCCCCCCCCCCCCCCCCCCCC")
+
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def ocr_function(purchase_order_file):
+    url = "https://api.ocr.space/parse/image"
+
+    payload = {'language': 'eng',
+               'isOverlayRequired': 'true',
+               'detectOrientation': 'true',
+               'isTable': 'true',
+               'OCREngine': '5'}
+    files = [
+        ('file', ('po.png', purchase_order_file.read(), 'image/png'))
+    ]
+    headers = {
+        'apikey': OCR_SPACE_API_KEY
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+
+    return json.loads(response.text)
+
+
+def retrieve_po_data(request):
+    try:
+        company = (request.data.get('company'))
+        purchase_order = (request.FILES.get('purchase_order'))
+
+        json_purchase_order = ocr_function(purchase_order_file=purchase_order)
+
+        if company == 'A':
+            get_po_data_for_company_a(data=json_purchase_order)
+        elif company == 'B':
+            get_po_data_for_company_b(data=json_purchase_order)
+        elif company == 'C':
+            get_po_data_for_company_c(data=json_purchase_order)
+
+    except Exception as err:
+        return Response.internal_server_error(str(err))
