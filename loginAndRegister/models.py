@@ -15,6 +15,9 @@ class Roles(models.Model):
     class Meta:
         db_table = "Roles"
 
+    @staticmethod
+    def get_role_by_id(id=None):
+        return Roles.objects.get(id=id)
 
 class Users(models.Model):
     phone_number = models.CharField(max_length=15, default='')

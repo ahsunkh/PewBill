@@ -12,8 +12,12 @@ from pewbill.responsesdescription import USER_ALREADY_EXISTS, USER_DOES_NOT_CREA
 from pewbill.settings import OCR_SPACE_API_KEY
 from scripts.sendEmail import SendEmail
 from template.o_template import PewBillTemplate
+from utilities.helper_functions import get_po_data_for_k_electric, get_po_data_for_pel, get_po_data_for_elmetec, \
+    get_po_data_for_transfopower, get_po_data_for_skypower
 from utilities.otp import PewBillOTP
 from utilities.pewbill_jwt import PewBillJWT
+
+PDF_EXTENSION_LIST = ['PDF', 'pdf']
 
 
 def build_user_name(first_name, last_name):
@@ -32,6 +36,8 @@ def user_signup_email(data):
             return Response.error(error_response=USER_ALREADY_EXISTS, status=ERROR_STATUS_CODE_CONFLICT)
         password = generate_password_hash(data.get('password'))
         data["password"] = password
+        data['role'] = Roles.get_role_by_id(id=data.get('role'))
+
         user_name = build_user_name(first_name=data['first_name'], last_name=data['last_name'])
         data.update({"user_name": user_name})
         users = Users.create_email_user(data=data)
@@ -166,32 +172,6 @@ def add_roles_on_first_migrate():
         print("Roles not created", e)
 
 
-def get_po_data_for_company_a(data):
-    try:
-        po_number = data['ParsedResults'][0]['TextOverlay']['Lines'][4]['LineText']
-        purchase_order_date = data['ParsedResults'][0]['TextOverlay']['Lines'][6]['LineText']
-        data = {"purchase_order_number": po_number[-7::],
-                "purchase_order_date": purchase_order_date}
-        print(data)
-    except Exception as err:
-        return Response.internal_server_error(str(err))
-
-
-def get_po_data_for_company_b(data):
-    try:
-        pass
-    except Exception as err:
-        return Response.internal_server_error(str(err))
-
-
-def get_po_data_for_company_c(data):
-    try:
-        print("CCCCCCCCCCCCCCCCCCCCCC")
-
-    except Exception as err:
-        return Response.internal_server_error(str(err))
-
-
 def ocr_function(purchase_order_file):
     url = "https://api.ocr.space/parse/image"
 
@@ -200,9 +180,17 @@ def ocr_function(purchase_order_file):
                'detectOrientation': 'true',
                'isTable': 'true',
                'OCREngine': '5'}
-    files = [
-        ('file', ('po.png', purchase_order_file.read(), 'image/png'))
-    ]
+    file_po = str(purchase_order_file).split('.')
+    ext = file_po[1]
+    if ext in PDF_EXTENSION_LIST:
+        files = [
+            ('purchase_order', (str(purchase_order_file), purchase_order_file.read(),
+                                'application/octet-stream'))
+        ]
+    else:
+        files = [
+            ('purchase_order', (str(purchase_order_file), purchase_order_file.read(), 'image/png'))
+        ]
     headers = {
         'apikey': OCR_SPACE_API_KEY
     }
@@ -219,12 +207,16 @@ def retrieve_po_data(request):
 
         json_purchase_order = ocr_function(purchase_order_file=purchase_order)
 
-        if company == 'A':
-            get_po_data_for_company_a(data=json_purchase_order)
-        elif company == 'B':
-            get_po_data_for_company_b(data=json_purchase_order)
-        elif company == 'C':
-            get_po_data_for_company_c(data=json_purchase_order)
+        if company == 'K-Electric':
+            get_po_data_for_k_electric(data=json_purchase_order)
+        elif company == 'PEL':
+            get_po_data_for_pel(data=json_purchase_order)
+        elif company == 'Elmetec':
+            get_po_data_for_elmetec(data=json_purchase_order)
+        elif company == 'Transfopower':
+            get_po_data_for_transfopower(data=json_purchase_order)
+        elif company == 'Skypower':
+            get_po_data_for_skypower(data=json_purchase_order)
 
     except Exception as err:
         return Response.internal_server_error(str(err))
