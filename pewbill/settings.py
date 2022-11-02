@@ -85,7 +85,7 @@ TEMPLATES = [
         },
     },
 ]
-
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 WSGI_APPLICATION = 'pewbill.wsgi.application'
 
 REST_FRAMEWORK = {

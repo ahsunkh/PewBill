@@ -260,7 +260,7 @@ class OrderDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     price = models.FloatField()
-    quantity = models.IntegerField(max_length=100, blank=True)
+    quantity = models.IntegerField()
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -299,7 +299,7 @@ class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
-    quantity = models.IntegerField(max_length=100, blank=True)
+    quantity = models.IntegerField()
 
     class Meta:
         db_table = "Challan"

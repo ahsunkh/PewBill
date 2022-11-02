@@ -69,9 +69,7 @@ def user_signin_email(data):
                 return Response.create_data(created_data_response=users_serializer, status=SUCCESS_STATUS_CODE)
             return Response.error("invalid password")
         return Response.error(USER_DOES_NOT_EXIST)
-
     except Exception as err:
-        raise
         return Response.internal_server_error(str(err))
 
 
@@ -168,11 +166,16 @@ def add_roles_on_first_migrate():
 
 def get_po_data_for_company_a(data):
     try:
-        po_number = data['ParsedResults'][0]['TextOverlay']['Lines'][4]['LineText']
-        purchase_order_date = data['ParsedResults'][0]['TextOverlay']['Lines'][6]['LineText']
-        data = {"purchase_order_number": po_number[-7::],
-                "purchase_order_date": purchase_order_date}
-        print(data)
+        # po_number = data['ParsedResults'][0]['TextOverlay']['Lines'][4]['LineText']
+        # purchase_order_date = data['ParsedResults'][0]['TextOverlay']['Lines'][6]['LineText']
+        # delivery_date = data['ParsedResults'][0]['TextOverlay']['Lines'][29]['LineText']
+        for i in data:
+            print(i)
+        # data = {"purchase_order_number": po_number[-7::],
+        #         "purchase_order_date": purchase_order_date,
+        #         "delivery_date":delivery_date,
+        #         }
+        # print(data)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
