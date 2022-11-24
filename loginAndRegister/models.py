@@ -179,8 +179,9 @@ class Category(models.Model):
 
 
 class Product(models.Model):
+    product_id = models.CharField(max_length=50, blank=False)
     name = models.CharField(max_length=50, null=False, blank=False)
-    unit_price = models.FloatField()
+    unit_price = models.FloatField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
 
     class Meta:
@@ -218,7 +219,6 @@ class Product(models.Model):
 class PurchaseOrder(models.Model):
     purchase_order_number = models.CharField(null=False, blank=False, max_length=100)
     purchase_order_date = models.CharField(null=False, blank=False, max_length=100)
-    delivery_date = models.CharField(null=False, blank=False, max_length=100)
     quantity = models.IntegerField(default=0)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
     total_amount = models.DecimalField(max_digits=30, decimal_places=2)
@@ -235,9 +235,9 @@ class PurchaseOrder(models.Model):
         try:
             if data is not None:
                 return PurchaseOrder.objects.create(**data)
-        except:
-            return Response.error("invalid request")
-
+        except Exception as err:
+            print(err)
+            return {}
     @staticmethod
     def update_purchase_order(type=None):
         if type is not None:
@@ -263,6 +263,7 @@ class OrderDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     price = models.FloatField()
+    delivery_date = models.CharField(blank=True, max_length=100)
     quantity = models.IntegerField(max_length=100, blank=True)
     date = models.DateTimeField(auto_now_add=True)
 

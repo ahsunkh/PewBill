@@ -15,9 +15,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = ['id', 'product_id', 'name', 'unit_price', 'category']
 
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
@@ -25,7 +27,8 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseOrder
-        fields = "__all__"
+        fields = ['id', 'purchase_order_number', 'purchase_order_date',
+                  'quantity', 'company', 'total_amount']
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):

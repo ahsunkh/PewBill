@@ -179,7 +179,7 @@ def get_single_product(id):
 def delete_product(id):
     try:
         Product.delete_single_product(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("Product deleted successfully.")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -199,7 +199,24 @@ def get_all_purchase_order():
 
 def create_purchase_order_act(data):
     try:
+        product_list = data.pop('product')
+        quantity_list = data.pop('order_quantity')
+        delivery_date = data.pop('delivery_date')
+
         purchase_order = PurchaseOrder().create_purchase_order(data=data)
+
+        for i in range(len(product_list)):
+            product_obj = Product.get_one_product(pk=product_list[i])
+            item_quantity = quantity_list[i]
+
+            dict_order_detail = {"purchase_order": purchase_order,
+                                 "product": product_obj,
+                                 "quantity": item_quantity,
+                                 "price": product_obj.unit_price,
+                                 "delivery_date": delivery_date}
+
+            OrderDetail.create_order_detail(data=dict_order_detail)
+
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
         return Response.create_data(purchase_order_serializer)
     except Exception as err:
@@ -382,6 +399,7 @@ def get_single_bill(id):
         return JsonResponse(bill_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
+
 
 def delete_bill(id):
     try:

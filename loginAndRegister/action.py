@@ -208,15 +208,15 @@ def retrieve_po_data(request):
         json_purchase_order = ocr_function(purchase_order_file=purchase_order)
 
         if company == 'K-Electric':
-            get_po_data_for_k_electric(data=json_purchase_order)
+            return Response.create_data(get_po_data_for_k_electric(data=json_purchase_order))
         elif company == 'PEL':
-            get_po_data_for_pel(data=json_purchase_order)
+            return Response.create_data(get_po_data_for_pel(data=json_purchase_order))
         elif company == 'Elmetec':
-            get_po_data_for_elmetec(data=json_purchase_order)
+            return Response.create_data(get_po_data_for_elmetec(data=json_purchase_order))
         elif company == 'Transfopower':
-            get_po_data_for_transfopower(data=json_purchase_order)
+            return Response.create_data(get_po_data_for_transfopower(data=json_purchase_order))
         elif company == 'Skypower':
-            get_po_data_for_skypower(data=json_purchase_order)
+            return Response.create_data(get_po_data_for_skypower(data=json_purchase_order))
 
     except Exception as err:
         return Response.internal_server_error(str(err))
