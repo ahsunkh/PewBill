@@ -40,12 +40,18 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class ChallanSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    purchase_order = PurchaseOrderSerializer(read_only=True)
+
     class Meta:
         model = Challan
         fields = "__all__"
 
 
 class BillSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    purchase_order = PurchaseOrderSerializer(read_only=True)
+
     class Meta:
         model = Bill
         fields = "__all__"

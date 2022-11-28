@@ -453,3 +453,4 @@ class BillDetail(APIView):
                 return delete_bill(id=pk)
         except Exception as err:
             return Response.error(str(err))
+

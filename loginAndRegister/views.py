@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-
 from loginAndRegister.action import user_signup_email, user_signin_email, verify_user_email_signin_otp, update_user, \
     forget_password_action, delete_user, logout_user, retrieve_po_data
 from pewbill.responses import Response

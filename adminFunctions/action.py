@@ -3,7 +3,7 @@
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, OrderDetail, Challan, \
     Bill
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
-    PurchaseOrderSerializer, OrderDetailSerializer, OrderDetailSerializer, BillSerializer
+    PurchaseOrderSerializer, OrderDetailSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
@@ -158,9 +158,9 @@ def update_product_act(id=None, request=None):
     try:
         data = request.data
         data.update({"id": id})
-        is_updated, product = Company.update_product(type=data)
+        is_updated, product = Product.update_product(type=data)
         if is_updated:
-            product_serializer = CompanySerializer(product).data
+            product_serializer = ProductSerializer(product).data
             return Response.create_data(product_serializer, status=SUCCESS_STATUS_CODE)
         return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
@@ -216,10 +216,25 @@ def create_purchase_order_act(data):
                                  "delivery_date": delivery_date}
 
             OrderDetail.create_order_detail(data=dict_order_detail)
+        purchase_order = PurchaseOrder().create_purchase_order(data=data)
+        my_list = []
+        for i in range(len(product_list)):
+            product_obj = Product.get_one_product(pk=product_list[i])
+            quantity = quantity_list[i]
+
+            dict_ = {"purchase_order": purchase_order,
+                     "product": product_obj,
+                     "quantity": quantity,
+                     "price": product_obj.unit_price}
+
+            my_list.append(dict_)
+
+        OrderDetail.create_bulk_order_detail(data=my_list)
 
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
         return Response.create_data(purchase_order_serializer)
     except Exception as err:
+        # raise
         return Response.internal_server_error(str(err))
 
 
@@ -312,7 +327,7 @@ def delete_order_detail(id):
 def get_all_challan():
     try:
         challan = Challan().get_challan()
-        challan_serializer = OrderDetailSerializer(challan, many=True).data
+        challan_serializer = ChallanSerializer(challan, many=True).data
         return challan_serializer
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -321,7 +336,7 @@ def get_all_challan():
 def create_challan_act(data):
     try:
         challan = Challan().create_challan(data=data)
-        challan_serializer = OrderDetailSerializer(challan).data
+        challan_serializer = ChallanSerializer(challan).data
         return Response.create_data(challan_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
