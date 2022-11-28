@@ -168,6 +168,7 @@ def add_roles_on_first_migrate():
 
 def get_po_data_for_company_a(data):
     try:
+<<<<<<< HEAD
         new_data = data['ParsedResults'][0]['TextOverlay']['Lines']
         po_number = new_data[4]['LineText']
         purchase_order_date = new_data[6]['LineText']
@@ -193,6 +194,14 @@ def get_po_data_for_company_a(data):
         # print(data)
     except Exception as err:
         # raise
+=======
+        po_number = data['ParsedResults'][0]['TextOverlay']['Lines'][4]['LineText']
+        purchase_order_date = data['ParsedResults'][0]['TextOverlay']['Lines'][6]['LineText']
+        data = {"purchase_order_number": po_number[-7::],
+                "purchase_order_date": purchase_order_date}
+        print(data)
+    except Exception as err:
+>>>>>>> edd81339058c4d8e4f566d1d1385557ed8346d2f
         return Response.internal_server_error(str(err))
 
 

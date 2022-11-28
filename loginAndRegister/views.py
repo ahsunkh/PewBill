@@ -52,8 +52,9 @@ class UserUpdateDetail(APIView):
     def put(request, pk=None):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            print(request)
             if user_id:
-                return update_user(id=pk, request=request)
+                return update_user(id=pk, data=request.data)
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
