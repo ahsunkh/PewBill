@@ -336,6 +336,20 @@ class OrderDetailDetail(APIView):
             return Response.error(str(err))
 
 
+class GetPurchaseOrderByON(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request, pk):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_by_order_details_by_po(id=pk))
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
 class ChallanGet(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -394,6 +408,18 @@ class ChallanDetail(APIView):
         except Exception as err:
             return Response.error(str(err))
 
+class DeliveryRecordGet(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_all_delivery())
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
 
 class BillGet(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

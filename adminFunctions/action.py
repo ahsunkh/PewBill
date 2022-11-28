@@ -1,9 +1,9 @@
 # import Paginator as Paginator
 
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, OrderDetail, Challan, \
-    Bill
+    Bill, DeliveryRecord
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
-    PurchaseOrderSerializer, OrderDetailSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer
+    PurchaseOrderSerializer, OrderDetailSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer,DeliveryRecordSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
@@ -147,6 +147,10 @@ def get_all_product():
 
 def create_product_act(data):
     try:
+        category_id = data.get("category")
+        category_object = Category.get_one_category(pk=category_id)
+        data['category'] = category_object
+
         product = Product().create_product(data=data)
         product_serializer = ProductSerializer(product).data
         return Response.create_data(product_serializer)
@@ -203,38 +207,29 @@ def create_purchase_order_act(data):
         quantity_list = data.pop('order_quantity')
         delivery_date = data.pop('delivery_date')
 
+        company_obj = Company.get_one_company(pk=data.get('company'))
+        data['company'] = company_obj
         purchase_order = PurchaseOrder().create_purchase_order(data=data)
 
-        for i in range(len(product_list)):
-            product_obj = Product.get_one_product(pk=product_list[i])
-            item_quantity = quantity_list[i]
-
-            dict_order_detail = {"purchase_order": purchase_order,
-                                 "product": product_obj,
-                                 "quantity": item_quantity,
-                                 "price": product_obj.unit_price,
-                                 "delivery_date": delivery_date}
-
-            OrderDetail.create_order_detail(data=dict_order_detail)
-        purchase_order = PurchaseOrder().create_purchase_order(data=data)
         my_list = []
         for i in range(len(product_list)):
             product_obj = Product.get_one_product(pk=product_list[i])
             quantity = quantity_list[i]
 
-            dict_ = {"purchase_order": purchase_order,
-                     "product": product_obj,
-                     "quantity": quantity,
-                     "price": product_obj.unit_price}
+            dict_order_detail = {"purchase_order": purchase_order,
+                                 "product": product_obj,
+                                 "quantity": quantity,
+                                 "price": product_obj.unit_price,
+                                 "delivery_date": delivery_date}
 
-            my_list.append(dict_)
+            my_list.append(dict_order_detail)
 
         OrderDetail.create_bulk_order_detail(data=my_list)
 
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
         return Response.create_data(purchase_order_serializer)
     except Exception as err:
-        # raise
+
         return Response.internal_server_error(str(err))
 
 
@@ -320,6 +315,15 @@ def delete_order_detail(id):
         return Response.internal_server_error(str(err))
 
 
+def get_by_order_details_by_po(id):
+    try:
+        order_details = OrderDetail.get_order_details_by_po_no(pk=id)
+        order_details_seriliazer = OrderDetailSerializer(order_details, many=True).data
+        return order_details_seriliazer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
 """ Challan Action 
     so it providing challan functions"""
 
@@ -335,8 +339,16 @@ def get_all_challan():
 
 def create_challan_act(data):
     try:
+        order_detail_obj = OrderDetail.get_one_order_detail(pk=data.get("order_detail"))
+        data["order_detail"] = order_detail_obj
+
         challan = Challan().create_challan(data=data)
+
+        dic_ = {"order_detail": order_detail_obj,
+                "quantity_delivered": data.get("quantity")}
+        DeliveryRecord.create_delivery_record(dic_)
         challan_serializer = ChallanSerializer(challan).data
+
         return Response.create_data(challan_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -358,7 +370,7 @@ def update_challan_act(id=None, request=None):
 def get_single_challan(id):
     try:
         challan = Challan().get_one_challan(pk=id)
-        challan_serializer = OrderDetailSerializer(challan, many=False).data
+        challan_serializer = ChallanSerializer(challan, many=False).data
         return JsonResponse(challan_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -368,6 +380,19 @@ def delete_challan(id):
     try:
         Challan().delete_single_challan(pk=id)
         return Response.create_success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+""" Delivery Action 
+    so it providing delivery functions"""
+
+
+def get_all_delivery():
+    try:
+        delivery_record = DeliveryRecord().get_delivery_record()
+        delivery_record_serializer = DeliveryRecordSerializer(delivery_record, many=True).data
+        return delivery_record_serializer
     except Exception as err:
         return Response.internal_server_error(str(err))
 

@@ -10,6 +10,6 @@ urlpatterns = [
     path('user/forget/password', views.UserForgetPassword.as_view()),
     path('user/delete/<pk>', views.UserDelete.as_view()),
     path('user/delete', views.UserLogOut.as_view()),
-    path('checking/file', views.CheckingFile.as_view()),
+    # path('checking/file', views.CheckingFile.as_view()),
     path('retrieve/po-data', views.RetrievePurchaseOrderData.as_view()),
 ]

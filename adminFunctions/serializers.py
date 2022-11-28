@@ -19,7 +19,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'product_id', 'name', 'unit_price', 'category']
+        fields = ['id', 'product_code', 'name', 'unit_price', 'category']
 
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
@@ -33,6 +33,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
+    purchase_order = PurchaseOrderSerializer(read_only=True)
 
     class Meta:
         model = OrderDetail
@@ -40,8 +41,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class ChallanSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
-    purchase_order = PurchaseOrderSerializer(read_only=True)
+    order_detail = OrderDetailSerializer(read_only=True)
 
     class Meta:
         model = Challan
@@ -49,8 +49,17 @@ class ChallanSerializer(serializers.ModelSerializer):
 
 
 class BillSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+    # product = ProductSerializer(read_only=True)
     purchase_order = PurchaseOrderSerializer(read_only=True)
+
+    class Meta:
+        model = Bill
+        fields = "__all__"
+
+
+class DeliveryRecordSerializer(serializers.ModelSerializer):
+    # product = ProductSerializer(read_only=True)
+    order_detail = OrderDetailSerializer(read_only=True)
 
     class Meta:
         model = Bill

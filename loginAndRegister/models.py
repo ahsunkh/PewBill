@@ -19,6 +19,7 @@ class Roles(models.Model):
     def get_role_by_id(id=None):
         return Roles.objects.get(id=id)
 
+
 class Users(models.Model):
     phone_number = models.CharField(max_length=15, default='')
     user_name = models.CharField(max_length=50)
@@ -32,6 +33,8 @@ class Users(models.Model):
     role = models.ForeignKey(Roles, on_delete=models.SET_NULL, null=True)
     status = models.BooleanField(blank=False, default=True)
     two_factor_auth = models.BooleanField(blank=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "Users"
@@ -109,6 +112,8 @@ class Company(models.Model):
     logo = models.CharField(max_length=50, null=False, blank=False)
     phone = models.CharField(max_length=15, default='')
     email = models.EmailField(null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "Company"
@@ -170,16 +175,16 @@ class Category(models.Model):
 
     @staticmethod
     def get_one_category(pk):
-        return Category.objects.get(pk=pk)
+        return Category.objects.get(id=pk)
 
     @staticmethod
     def delete_single_category(pk):
-        category = Category.objects.get(pk=pk)
+        category = Category.objects.get(id=pk)
         category.delete()
 
 
 class Product(models.Model):
-    product_id = models.CharField(max_length=50, blank=False)
+    product_code = models.CharField(max_length=50, blank=False)
     name = models.CharField(max_length=50, null=False, blank=False)
     unit_price = models.FloatField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
@@ -222,6 +227,9 @@ class PurchaseOrder(models.Model):
     quantity = models.IntegerField(default=0)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
     total_amount = models.DecimalField(max_digits=30, decimal_places=2)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "PurchaseOrder"
@@ -238,6 +246,7 @@ class PurchaseOrder(models.Model):
         except Exception as err:
             print(err)
             return {}
+
     @staticmethod
     def update_purchase_order(type=None):
         if type is not None:
@@ -266,10 +275,18 @@ class OrderDetail(models.Model):
     delivery_date = models.CharField(blank=True, max_length=100)
     quantity = models.IntegerField(max_length=100, blank=True)
     quantity = models.IntegerField()
-    date = models.DateTimeField(auto_now_add=True)
+    is_delivered = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "OrderDetail"
+
+    @staticmethod
+    def get_order_details_by_po_no(pk):
+        print(pk)
+        order_details = OrderDetail.objects.filter(purchase_order=pk)
+        return order_details
 
     @staticmethod
     def get_order_detail():
@@ -281,7 +298,7 @@ class OrderDetail(models.Model):
 
     @staticmethod
     def create_bulk_order_detail(data):
-            return OrderDetail.objects.bulk_create(OrderDetail(**value) for value in data)
+        return OrderDetail.objects.bulk_create(OrderDetail(**value) for value in data)
 
     @staticmethod
     def update_order_detail(type=None):
@@ -306,9 +323,12 @@ class OrderDetail(models.Model):
 
 class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
+    # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    # purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
+    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "Challan"
@@ -344,10 +364,12 @@ class Challan(models.Model):
 
 class Bill(models.Model):
     bill_date = models.CharField(null=False, blank=False, max_length=100)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
+    # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField(blank=True)
     total_amount = models.DecimalField(max_digits=30, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
 
     class Meta:
         db_table = "Bill"
@@ -379,3 +401,21 @@ class Bill(models.Model):
     def delete_single_bill(pk):
         bill = Bill.objects.get(id=pk)
         bill.delete()
+
+
+class DeliveryRecord(models.Model):
+    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
+    quantity_delivered = models.IntegerField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "DeliveryRecord"
+
+    @staticmethod
+    def get_delivery_record():
+        return DeliveryRecord.objects.all()
+
+    @staticmethod
+    def create_delivery_record(data):
+        return DeliveryRecord.objects.create(**data)
