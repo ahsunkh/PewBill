@@ -74,11 +74,11 @@ class Users(models.Model):
         return False
 
     @staticmethod
-    def update_model_user(type=None):
+    def update_model_user(id=None, update_data=None):
         if type is not None:
             try:
-                Users.objects.filter(id=type.get('id')).update(**type)
-                user = Users.objects.get(id=type.get('id'))
+                Users.objects.filter(id=id).update(**update_data)
+                user = Users.objects.get(id=id)
                 return True, user
             except Exception as err:
                 return False, {}
@@ -131,11 +131,11 @@ class Company(models.Model):
 
     @staticmethod
     def get_one_company(pk):
-        return Company.objects.get(pk=pk)
+        return Company.objects.get(id=pk)
 
     @staticmethod
     def delete_single_company(pk):
-        company = Company.objects.get(pk=pk)
+        company = Company.objects.get(id=pk)
         company.delete()
 
 
@@ -204,11 +204,11 @@ class Product(models.Model):
 
     @staticmethod
     def get_one_product(pk):
-        return Product.objects.get(pk=pk)
+        return Product.objects.get(id=pk)
 
     @staticmethod
     def delete_single_product(pk):
-        product = Product.objects.get(pk=pk)
+        product = Product.objects.get(id=pk)
         product.delete()
 
 
@@ -248,11 +248,11 @@ class PurchaseOrder(models.Model):
 
     @staticmethod
     def get_one_purchase_order(pk):
-        return PurchaseOrder.objects.get(pk=pk)
+        return PurchaseOrder.objects.get(id=pk)
 
     @staticmethod
     def delete_single_purchase_order(pk):
-        purchase_order = PurchaseOrder.objects.get(pk=pk)
+        purchase_order = PurchaseOrder.objects.get(id=pk)
         purchase_order.delete()
 
 
@@ -260,7 +260,7 @@ class OrderDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     price = models.FloatField()
-    quantity = models.IntegerField(max_length=100, blank=True)
+    quantity = models.IntegerField()
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -275,6 +275,10 @@ class OrderDetail(models.Model):
         return OrderDetail.objects.create(**data)
 
     @staticmethod
+    def create_bulk_order_detail(data):
+            return OrderDetail.objects.bulk_create(OrderDetail(**value) for value in data)
+
+    @staticmethod
     def update_order_detail(type=None):
         if type is not None:
             try:
@@ -287,11 +291,11 @@ class OrderDetail(models.Model):
 
     @staticmethod
     def get_one_order_detail(pk):
-        return OrderDetail.objects.get(pk=pk)
+        return OrderDetail.objects.get(id=pk)
 
     @staticmethod
     def delete_single_order_detail(pk):
-        order_detail = OrderDetail.objects.get(pk=pk)
+        order_detail = OrderDetail.objects.get(id=pk)
         order_detail.delete()
 
 
@@ -299,7 +303,7 @@ class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
-    quantity = models.IntegerField(max_length=100, blank=True)
+    quantity = models.IntegerField()
 
     class Meta:
         db_table = "Challan"
@@ -325,11 +329,11 @@ class Challan(models.Model):
 
     @staticmethod
     def get_one_challan(pk):
-        return Challan.objects.get(pk=pk)
+        return Challan.objects.get(id=pk)
 
     @staticmethod
-    def delete_single_order_detail(pk):
-        challan = Challan.objects.get(pk=pk)
+    def delete_single_challan(pk):
+        challan = Challan.objects.get(id=pk)
         challan.delete()
 
 
@@ -364,9 +368,9 @@ class Bill(models.Model):
 
     @staticmethod
     def get_one_bill(pk):
-        return Bill.objects.get(pk=pk)
+        return Bill.objects.get(id=pk)
 
     @staticmethod
     def delete_single_bill(pk):
-        bill = Bill.objects.get(pk=pk)
+        bill = Bill.objects.get(id=pk)
         bill.delete()
