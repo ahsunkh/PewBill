@@ -64,3 +64,12 @@ class DeliveryRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bill
         fields = "__all__"
+
+
+class PoStatsSerializer(serializers.ModelSerializer):
+    created_at__date = serializers.DateField(read_only=True)
+    count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = PurchaseOrder
+        fields = ['created_at__date', 'count']

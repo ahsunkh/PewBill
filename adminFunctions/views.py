@@ -350,6 +350,23 @@ class GetPurchaseOrderByON(APIView):
             return Response.error(str(err))
 
 
+class PewStats(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            start_date = request.GET.get('start_date', '')
+            end_date = request.GET.get('end_date', '')
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_po_registration_stats(start_date, end_date))
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+
 class ChallanGet(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -400,6 +417,19 @@ class ChallanDetail(APIView):
             return Response.error(str(err))
 
     @staticmethod
+    # def get(request, pk=None):
+    #
+    #     try:
+    #         user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+    #         if user_id:
+    #             return get_single_challan(id=pk)
+    #         return Response.error(INVALID_DATA)
+    #     except Exception as err:
+    #         return Response.error(str(err))
+
+
+
+    @staticmethod
     def delete(request, pk=None):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
@@ -407,6 +437,7 @@ class ChallanDetail(APIView):
                 return delete_challan(id=pk)
         except Exception as err:
             return Response.error(str(err))
+
 
 class DeliveryRecordGet(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -420,6 +451,7 @@ class DeliveryRecordGet(APIView):
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
+
 
 class BillGet(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -470,7 +502,6 @@ class BillDetail(APIView):
         except Exception as err:
             return Response.error(str(err))
 
-
     @staticmethod
     def delete(request, pk=None):
         try:
@@ -479,4 +510,3 @@ class BillDetail(APIView):
                 return delete_bill(id=pk)
         except Exception as err:
             return Response.error(str(err))
-

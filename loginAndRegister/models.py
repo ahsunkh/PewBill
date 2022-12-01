@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db.models import Count
 
 from pewbill.responses import Response
 
@@ -238,6 +239,12 @@ class PurchaseOrder(models.Model):
     def get_purchase_order():
         return PurchaseOrder.objects.all()
 
+    def get_total_po_registration(start_date, end_date):
+        return PurchaseOrder.objects.values(
+            'created_at__date').annotate(
+            count=Count('id')).filter(
+            created_at__date__range=[start_date, end_date]).order_by('created_at__date')
+
     @staticmethod
     def create_purchase_order(data):
         try:
@@ -284,9 +291,11 @@ class OrderDetail(models.Model):
 
     @staticmethod
     def get_order_details_by_po_no(pk):
-        print(pk)
+        # print(pk)
         order_details = OrderDetail.objects.filter(purchase_order=pk)
         return order_details
+
+
 
     @staticmethod
     def get_order_detail():
@@ -354,7 +363,8 @@ class Challan(models.Model):
 
     @staticmethod
     def get_one_challan(pk):
-        return Challan.objects.get(id=pk)
+        return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
+
 
     @staticmethod
     def delete_single_challan(pk):

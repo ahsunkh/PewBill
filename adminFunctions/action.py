@@ -1,13 +1,14 @@
 # import Paginator as Paginator
+import datetime
 
-from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, OrderDetail, Challan, \
+from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, Challan, \
     Bill, DeliveryRecord
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
-    PurchaseOrderSerializer, OrderDetailSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer,DeliveryRecordSerializer
+    PurchaseOrderSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer, \
+    DeliveryRecordSerializer, PoStatsSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 
 
@@ -67,7 +68,7 @@ def get_single_company(id):
     try:
         company = Company.get_one_company(pk=id)
         company_serializer = CompanySerializer(company, many=False).data
-        return JsonResponse(company_serializer)
+        return Response.create_data(company_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -75,7 +76,7 @@ def get_single_company(id):
 def delete_company(id):
     try:
         Company.delete_single_company(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -119,7 +120,7 @@ def get_single_category(id):
     try:
         category = Category.get_one_category(pk=id)
         category_serializer = CategorySerializer(category, many=False).data
-        return JsonResponse(category_serializer)
+        return Response.create_data(category_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -127,7 +128,7 @@ def get_single_category(id):
 def delete_category(id):
     try:
         Category.delete_single_category(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -175,7 +176,7 @@ def get_single_product(id):
     try:
         product = Product.get_one_product(pk=id)
         product_serializer = ProductSerializer(product, many=False).data
-        return JsonResponse(product_serializer)
+        return Response.create_data(product_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -250,7 +251,7 @@ def get_single_purchase_order(id):
     try:
         purchase_order = PurchaseOrder().get_one_purchase_order(pk=id)
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=False).data
-        return JsonResponse(purchase_order_serializer)
+        return Response.create_data(purchase_order_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -258,7 +259,7 @@ def get_single_purchase_order(id):
 def delete_purchase_order(id):
     try:
         PurchaseOrder.delete_single_purchase_order(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -302,7 +303,7 @@ def get_single_order_detail(id):
     try:
         order_detail = OrderDetail().get_one_order_detail(pk=id)
         order_detail_serializer = OrderDetailSerializer(order_detail, many=False).data
-        return JsonResponse(order_detail_serializer)
+        return Response.create_data(order_detail_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -310,7 +311,7 @@ def get_single_order_detail(id):
 def delete_order_detail(id):
     try:
         OrderDetail().delete_single_order_detail(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -318,10 +319,33 @@ def delete_order_detail(id):
 def get_by_order_details_by_po(id):
     try:
         order_details = OrderDetail.get_order_details_by_po_no(pk=id)
-        order_details_seriliazer = OrderDetailSerializer(order_details, many=True).data
-        return order_details_seriliazer
+        order_details_serializer = OrderDetailSerializer(order_details, many=True).data
+        return order_details_serializer
     except Exception as err:
         return Response.internal_server_error(str(err))
+
+
+def get_po_registration_stats(start_date, end_date):
+    try:
+        list_dates = []
+        list_counts = []
+
+        if start_date == '' or end_date == '':
+            start_date = (datetime.datetime.now() -
+                          datetime.timedelta(days=15)).date()
+            end_date = datetime.datetime.now().date()
+
+        po_stats = PurchaseOrder.get_total_po_registration(
+            start_date=start_date, end_date=end_date)
+        po_stats_serializer = PoStatsSerializer(po_stats, many=True).data
+
+        for item in po_stats_serializer:
+            list_dates.append(item['created_at__date'])
+            list_counts.append(item['count'])
+        return {"dates": list_dates,
+                "counts": list_counts}
+    except Exception as err:
+        return Response.internal_server_error(err)
 
 
 """ Challan Action 
@@ -346,6 +370,7 @@ def create_challan_act(data):
 
         dic_ = {"order_detail": order_detail_obj,
                 "quantity_delivered": data.get("quantity")}
+
         DeliveryRecord.create_delivery_record(dic_)
         challan_serializer = ChallanSerializer(challan).data
 
@@ -369,9 +394,11 @@ def update_challan_act(id=None, request=None):
 
 def get_single_challan(id):
     try:
+        # company=Company.get_one_company(pk=id)
         challan = Challan().get_one_challan(pk=id)
-        challan_serializer = ChallanSerializer(challan, many=False).data
-        return JsonResponse(challan_serializer)
+        challan_serializer = ChallanSerializer(challan, many=True).data
+
+        return Response.create_data(challan_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -379,7 +406,7 @@ def get_single_challan(id):
 def delete_challan(id):
     try:
         Challan().delete_single_challan(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -436,7 +463,7 @@ def get_single_bill(id):
     try:
         bill = Bill().get_one_bill(pk=id)
         bill_serializer = BillSerializer(bill, many=False).data
-        return JsonResponse(bill_serializer)
+        return Response.create_data(bill_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -444,6 +471,6 @@ def get_single_bill(id):
 def delete_bill(id):
     try:
         Bill().delete_single_bill(pk=id)
-        return Response.create_success("item has been deleted")
+        return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))

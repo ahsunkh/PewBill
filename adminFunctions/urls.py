@@ -17,6 +17,8 @@ urlpatterns = [
     path('get/purchaseorder', views.PurchaseOrderGet.as_view()),
     path('purchaseorder/detail/<pk>', views.PurchaseOrderDetail.as_view()),
 
+    path('retrieve/p_o', views.PewStats.as_view()),
+
     path('get/orderdetail', views.OderDetailGet.as_view()),
     path('oderdetail/detail/<pk>', views.OrderDetailDetail.as_view()),
 
