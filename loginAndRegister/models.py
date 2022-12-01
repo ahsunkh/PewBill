@@ -113,6 +113,7 @@ class Company(models.Model):
     logo = models.CharField(max_length=50, null=False, blank=False)
     phone = models.CharField(max_length=15, default='')
     email = models.EmailField(null=False, blank=False)
+    payment_terms = models.IntegerField(default=30)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
 
@@ -281,7 +282,7 @@ class OrderDetail(models.Model):
     price = models.FloatField()
     delivery_date = models.CharField(blank=True, max_length=100)
     quantity = models.IntegerField(max_length=100, blank=True)
-    quantity = models.IntegerField()
+    # quantity = models.IntegerField()
     is_delivered = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -332,9 +333,11 @@ class OrderDetail(models.Model):
 
 class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
+
     # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     # purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
     order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
+    bill = models.ForeignKey('Bill', on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -375,7 +378,7 @@ class Challan(models.Model):
 class Bill(models.Model):
     bill_date = models.CharField(null=False, blank=False, max_length=100)
     # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
+    # order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField(blank=True)
     total_amount = models.DecimalField(max_digits=30, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
