@@ -24,15 +24,20 @@ urlpatterns = [
 
     path('retrieve/order_detail/<pk>', views.GetPurchaseOrderByON.as_view()),
 
+    path('retrieve/challan/date', views.ChallanStats.as_view()),
+
     path('get/challan', views.ChallanGet.as_view()),
     path('challan/detail/<pk>', views.ChallanDetail.as_view()),
+
+    path('challan/by/po/<pk>', views.ChallanByPO.as_view()),
+
 
     # path('get/challan', views.DeliveryRecord.as_view()),
 
     path('get/bill', views.BillGet.as_view()),
     path('bill/detail/<pk>', views.BillDetail.as_view()),
 
-
+    path('retrieve/bill/date', views.BillStats.as_view()),
 
 
 
