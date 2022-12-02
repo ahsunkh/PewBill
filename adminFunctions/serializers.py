@@ -73,3 +73,21 @@ class PoStatsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = ['created_at__date', 'count']
+
+
+class ChallanStatsSerializer(serializers.ModelSerializer):
+    created_at__date = serializers.DateField(read_only=True)
+    count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Challan
+        fields = ['created_at__date', 'count']
+
+
+class BillStatsSerializer(serializers.ModelSerializer):
+    created_at__date = serializers.DateField(read_only=True)
+    count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Bill
+        fields = ['created_at__date', 'count']

@@ -346,6 +346,12 @@ class Challan(models.Model):
     def get_challan():
         return Challan.objects.all()
 
+    def get_total_challan_registration(start_date, end_date):
+        return Challan.objects.values(
+            'created_at__date').annotate(
+            count=Count('id')).filter(
+            created_at__date__range=[start_date, end_date]).order_by('created_at__date')
+
     @staticmethod
     def create_challan(data):
         return Challan.objects.create(**data)
@@ -375,7 +381,10 @@ class Challan(models.Model):
     @staticmethod
     def get_one_challan(pk):
         return Challan.objects.get(id=pk)
-        # return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
+
+    @staticmethod
+    def get_one_challan_by_po(pk):
+        return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
 
     @staticmethod
     def delete_single_challan(pk):
@@ -399,6 +408,12 @@ class Bill(models.Model):
     def get_bill():
         return Bill.objects.all()
 
+
+    def get_total_bill_registration(start_date, end_date):
+        return Bill.objects.values(
+            'created_at__date').annotate(
+            count=Count('id')).filter(
+            created_at__date__range=[start_date, end_date]).order_by('created_at__date')
     @staticmethod
     def create_bill(data):
         return Bill.objects.create(**data)

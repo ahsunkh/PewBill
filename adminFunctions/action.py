@@ -5,7 +5,7 @@ from loginAndRegister.models import Company, Category, Product, Users, PurchaseO
     Bill, DeliveryRecord
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
     PurchaseOrderSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer, \
-    DeliveryRecordSerializer, PoStatsSerializer
+    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
@@ -361,6 +361,29 @@ def get_all_challan():
         return Response.internal_server_error(str(err))
 
 
+def get_challan_registration_stats(start_date, end_date):
+    try:
+        list_dates = []
+        list_counts = []
+
+        if start_date == '' or end_date == '':
+            start_date = (datetime.datetime.now() -
+                          datetime.timedelta(days=15)).date()
+            end_date = datetime.datetime.now().date()
+
+        challan_stats = Challan.get_total_challan_registration(
+            start_date=start_date, end_date=end_date)
+        challan_stats_serializer = ChallanStatsSerializer(challan_stats, many=True).data
+
+        for item in challan_stats_serializer:
+            list_dates.append(item['created_at__date'])
+            list_counts.append(item['count'])
+        return {"dates": list_dates,
+                "counts": list_counts}
+    except Exception as err:
+        return Response.internal_server_error(err)
+
+
 def create_challan_act(data):
     try:
         order_detail_obj = OrderDetail.get_one_order_detail(pk=data.get("order_detail"))
@@ -394,8 +417,17 @@ def update_challan_act(id=None, request=None):
 
 def get_single_challan(id):
     try:
-        # company=Company.get_one_company(pk=id)
         challan = Challan().get_one_challan(pk=id)
+        challan_serializer = ChallanSerializer(challan, many=True).data
+
+        return Response.create_data(challan_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_single_challan_by_po(id):
+    try:
+        challan = Challan().get_one_challan_by_po(pk=id)
         challan_serializer = ChallanSerializer(challan, many=True).data
 
         return Response.create_data(challan_serializer)
@@ -437,6 +469,29 @@ def get_all_bill():
         return Response.internal_server_error(str(err))
 
 
+def get_bill_registration_stats(start_date, end_date):
+    try:
+        list_dates = []
+        list_counts = []
+
+        if start_date == '' or end_date == '':
+            start_date = (datetime.datetime.now() -
+                          datetime.timedelta(days=15)).date()
+            end_date = datetime.datetime.now().date()
+
+        bill_stats = Bill.get_total_bill_registration(
+            start_date=start_date, end_date=end_date)
+        bill_stats_serializer = BillStatsSerializer(bill_stats, many=True).data
+
+        for item in bill_stats_serializer:
+            list_dates.append(item['created_at__date'])
+            list_counts.append(item['count'])
+        return {"dates": list_dates,
+                "counts": list_counts}
+    except Exception as err:
+        return Response.internal_server_error(err)
+
+
 def create_bill_act(data):
     try:
 
@@ -464,7 +519,7 @@ def create_bill_act(data):
         bill_serializer = BillSerializer(bill).data
         return Response.create_data(bill_serializer)
     except Exception as err:
-        raise
+        # raise
         return Response.internal_server_error(str(err))
 
 
