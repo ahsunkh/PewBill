@@ -226,9 +226,7 @@ class Product(models.Model):
 class PurchaseOrder(models.Model):
     purchase_order_number = models.CharField(null=False, blank=False, max_length=100)
     purchase_order_date = models.CharField(null=False, blank=False, max_length=100)
-    quantity = models.IntegerField(default=0)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
-    total_amount = models.DecimalField(max_digits=30, decimal_places=2)
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -279,10 +277,8 @@ class PurchaseOrder(models.Model):
 class OrderDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    price = models.FloatField()
     delivery_date = models.CharField(blank=True, max_length=100)
     quantity = models.IntegerField(max_length=100, blank=True)
-    # quantity = models.IntegerField()
     is_delivered = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -331,8 +327,6 @@ class OrderDetail(models.Model):
 
 class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
-    # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    # purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
     order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
     bill = models.ForeignKey('Bill', on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
@@ -383,6 +377,10 @@ class Challan(models.Model):
         return Challan.objects.get(id=pk)
 
     @staticmethod
+    def get_all_challan_by_order_id(pk):
+        return Challan.objects.filter(order_detail=pk)
+
+    @staticmethod
     def get_one_challan_by_po(pk):
         return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
 
@@ -394,8 +392,6 @@ class Challan(models.Model):
 
 class Bill(models.Model):
     bill_date = models.CharField(null=False, blank=False, max_length=100)
-    # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    # order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField(blank=True)
     total_amount = models.DecimalField(max_digits=30, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
@@ -408,12 +404,12 @@ class Bill(models.Model):
     def get_bill():
         return Bill.objects.all()
 
-
     def get_total_bill_registration(start_date, end_date):
         return Bill.objects.values(
             'created_at__date').annotate(
             count=Count('id')).filter(
             created_at__date__range=[start_date, end_date]).order_by('created_at__date')
+
     @staticmethod
     def create_bill(data):
         return Bill.objects.create(**data)

@@ -552,3 +552,18 @@ class BillStats(APIView):
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
+
+
+class CheckQuantity(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            order_detail_id = request.GET.get('order_detail')
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_check_quantity(order_detail_id=order_detail_id)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))

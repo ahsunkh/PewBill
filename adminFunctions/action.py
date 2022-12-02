@@ -220,7 +220,6 @@ def create_purchase_order_act(data):
             dict_order_detail = {"purchase_order": purchase_order,
                                  "product": product_obj,
                                  "quantity": quantity,
-                                 "price": product_obj.unit_price,
                                  "delivery_date": delivery_date}
 
             my_list.append(dict_order_detail)
@@ -549,5 +548,28 @@ def delete_bill(id):
     try:
         Bill().delete_single_bill(pk=id)
         return Response.success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_check_quantity(order_detail_id):
+    try:
+        order_detail_obj = OrderDetail().get_one_order_detail(pk=order_detail_id)
+        total_quantity = order_detail_obj.quantity
+
+        list_challan = Challan.get_all_challan_by_order_id(pk=order_detail_id)
+        total_quantity_sent = 0
+
+        for item in list_challan:
+            total_quantity_sent = total_quantity_sent + item.quantity
+
+        percentage = float((total_quantity_sent / total_quantity) * 100)
+
+        dict_data = {"total_quantiy": total_quantity,
+                     "total_item_sent": total_quantity_sent,
+                     "percent_completed": percentage}
+
+        return Response.create_data(dict_data)
+
     except Exception as err:
         return Response.internal_server_error(str(err))

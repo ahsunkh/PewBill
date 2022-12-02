@@ -38,6 +38,7 @@ urlpatterns = [
     path('bill/detail/<pk>', views.BillDetail.as_view()),
 
     path('retrieve/bill/date', views.BillStats.as_view()),
+    path('check/quantity', views.CheckQuantity.as_view()),
 
 
 
