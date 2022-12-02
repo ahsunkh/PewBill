@@ -486,6 +486,7 @@ class BillDetail(APIView):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
+
                 return update_bill_act(id=pk, request=request)
             return Response.error(INVALID_DATA)
         except Exception as err:

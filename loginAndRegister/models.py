@@ -296,8 +296,6 @@ class OrderDetail(models.Model):
         order_details = OrderDetail.objects.filter(purchase_order=pk)
         return order_details
 
-
-
     @staticmethod
     def get_order_detail():
         return OrderDetail.objects.all()
@@ -333,7 +331,6 @@ class OrderDetail(models.Model):
 
 class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
-
     # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     # purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
     order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
@@ -365,9 +362,20 @@ class Challan(models.Model):
         return False, {}
 
     @staticmethod
-    def get_one_challan(pk):
-        return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
+    def update_challan_for_bill(id=None, data=None):
+        if type is not None:
+            try:
+                challan = Challan.objects.filter(id=id).update(**data)
+                # challan = Challan.objects.get(id=data.get('id'))
+                return True, challan
+            except Exception as err:
+                return False, {}
+        return False, {}
 
+    @staticmethod
+    def get_one_challan(pk):
+        return Challan.objects.get(id=pk)
+        # return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
 
     @staticmethod
     def delete_single_challan(pk):

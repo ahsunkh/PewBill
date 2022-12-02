@@ -439,10 +439,32 @@ def get_all_bill():
 
 def create_bill_act(data):
     try:
+
+        challan_list = data.pop("challans")
+        total_price = 0
+        total_quantity = 0
+        for i in challan_list:
+            challan = Challan.get_one_challan(pk=i)
+            quantity = challan.quantity
+            total_quantity = total_quantity + quantity
+            challan_serializer = ChallanSerializer(challan).data
+            order_dict = dict(challan_serializer["order_detail"])
+            order_detail_id = order_dict["id"]
+            order_detail_obj = OrderDetail.get_one_order_detail(pk=order_detail_id)
+            product_price = order_detail_obj.product.unit_price
+            total_price = total_price + (quantity * product_price)
+
+        data.update({"total_amount": total_price,
+                     "quantity": total_quantity})
+
         bill = Bill().create_bill(data=data)
+        for i in challan_list:
+            Challan.update_challan_for_bill(id=i, data={"bill": bill})
+
         bill_serializer = BillSerializer(bill).data
         return Response.create_data(bill_serializer)
     except Exception as err:
+        raise
         return Response.internal_server_error(str(err))
 
 
