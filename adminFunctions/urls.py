@@ -29,7 +29,7 @@ urlpatterns = [
     path('get/challan', views.ChallanGet.as_view()),
     path('challan/detail/<pk>', views.ChallanDetail.as_view()),
 
-    path('challan/by/po/<pk>', views.ChallanByPO.as_view()),
+    path('challan/company/<pk>', views.ChallanByCompany.as_view()),
 
 
     # path('get/challan', views.DeliveryRecord.as_view()),

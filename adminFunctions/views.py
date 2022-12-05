@@ -452,14 +452,14 @@ class ChallanDetail(APIView):
             return Response.error(str(err))
 
 
-class ChallanByPO(APIView):
+class ChallanByCompany(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(request, pk=None):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
-                return get_single_challan_by_po(id=pk)
+                return get_single_challan_by_company(id=pk)
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
@@ -485,9 +485,10 @@ class BillGet(APIView):
     @staticmethod
     def get(request):
         try:
+            company = request.GET.get('company')
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
-                return Response.create_data(get_all_bill())
+                return Response.create_data(get_all_bill(company=company))
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))

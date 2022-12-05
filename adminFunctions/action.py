@@ -424,9 +424,9 @@ def get_single_challan(id):
         return Response.internal_server_error(str(err))
 
 
-def get_single_challan_by_po(id):
+def get_single_challan_by_company(id):
     try:
-        challan = Challan().get_one_challan_by_po(pk=id)
+        challan = Challan().get_one_challan_by_company(pk=id)
         challan_serializer = ChallanSerializer(challan, many=True).data
 
         return Response.create_data(challan_serializer)
@@ -459,12 +459,14 @@ def get_all_delivery():
     so it providing Bill functions"""
 
 
-def get_all_bill():
+def get_all_bill(company):
     try:
-        bill = Bill().get_bill()
+        bill = Bill().get_bill(company=company)
+
         bill_serializer = BillSerializer(bill, many=True).data
         return bill_serializer
     except Exception as err:
+        print(err)
         return Response.internal_server_error(str(err))
 
 
@@ -507,6 +509,8 @@ def create_bill_act(data):
             order_detail_obj = OrderDetail.get_one_order_detail(pk=order_detail_id)
             product_price = order_detail_obj.product.unit_price
             total_price = total_price + (quantity * product_price)
+
+        data['company'] = Company.get_one_company(pk=data['company'])
 
         data.update({"total_amount": total_price,
                      "quantity": total_quantity})

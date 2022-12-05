@@ -278,7 +278,7 @@ class OrderDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     delivery_date = models.CharField(blank=True, max_length=100)
-    quantity = models.IntegerField(max_length=100, blank=True)
+    quantity = models.IntegerField(blank=True)
     is_delivered = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -328,7 +328,7 @@ class OrderDetail(models.Model):
 class Challan(models.Model):
     challan_date = models.CharField(null=False, blank=False, max_length=100)
     order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
-    bill = models.ForeignKey('Bill', on_delete=models.SET_NULL, null=True)
+    bill = models.ForeignKey('Bill', on_delete=models.SET_NULL, null=True, related_name='challan')
     quantity = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
@@ -381,7 +381,7 @@ class Challan(models.Model):
         return Challan.objects.filter(order_detail=pk)
 
     @staticmethod
-    def get_one_challan_by_po(pk):
+    def get_one_challan_by_company(pk):
         return Challan.objects.filter(order_detail__purchase_order__company_id=pk)
 
     @staticmethod
@@ -394,6 +394,7 @@ class Bill(models.Model):
     bill_date = models.CharField(null=False, blank=False, max_length=100)
     quantity = models.IntegerField(blank=True)
     total_amount = models.DecimalField(max_digits=30, decimal_places=2)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, blank=True)
 
@@ -401,8 +402,8 @@ class Bill(models.Model):
         db_table = "Bill"
 
     @staticmethod
-    def get_bill():
-        return Bill.objects.all()
+    def get_bill(company):
+        return Bill.objects.filter(company=company).prefetch_related('challan')
 
     def get_total_bill_registration(start_date, end_date):
         return Bill.objects.values(
@@ -427,7 +428,7 @@ class Bill(models.Model):
 
     @staticmethod
     def get_one_bill(pk):
-        return Bill.objects.get(id=pk)
+        return Bill.objects.prefetch_related('challan').get(id=pk)
 
     @staticmethod
     def delete_single_bill(pk):
