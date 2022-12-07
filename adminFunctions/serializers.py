@@ -27,7 +27,8 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseOrder
-        fields = ['id', 'purchase_order_number', 'purchase_order_date', 'company']
+        fields = "__all__"
+        # fields = ['id', 'purchase_order_number', 'purchase_order_date', 'company']
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
@@ -49,12 +50,13 @@ class ChallanSerializer(serializers.ModelSerializer):
 
 class BillSerializer(serializers.ModelSerializer):
     challan = ChallanSerializer(read_only=True, many=True)
+
     # purchase_order = PurchaseOrderSerializer(read_only=True)
 
     class Meta:
         model = Bill
-        # fields = '__all__'
-        fields = ['id', 'bill_date', 'quantity', 'total_amount', 'challan', 'company', 'created_at', 'updated_at']
+        fields = '__all__'
+        # fields = ['id', 'bill_date', 'quantity', 'total_amount', 'challan', 'company', 'created_at', 'updated_at']
 
 
 class DeliveryRecordSerializer(serializers.ModelSerializer):
@@ -73,6 +75,14 @@ class PoStatsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = ['created_at__date', 'count']
+
+
+class CompanyStatsSerializer(serializers.ModelSerializer):
+    count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Company
+        fields = ['count']
 
 
 class ChallanStatsSerializer(serializers.ModelSerializer):

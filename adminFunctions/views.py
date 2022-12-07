@@ -91,6 +91,20 @@ class CompanyDetail(APIView):
             return Response.error(str(err))
 
 
+class TotalNumberCompanies(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_companies_stats())
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
 class CategoryGet(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 

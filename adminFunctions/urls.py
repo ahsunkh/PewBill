@@ -7,6 +7,7 @@ urlpatterns = [
 
     path('get/company', views.CompanyGet.as_view()),
     path('company/detail/<pk>', views.CompanyDetail.as_view()),
+    path('retrieve/companies/counts', views.TotalNumberCompanies.as_view()),
 
     path('get/category', views.CategoryGet.as_view()),
     path('category/detail/<pk>', views.CategoryDetail.as_view()),
@@ -32,7 +33,7 @@ urlpatterns = [
     path('challan/company/<pk>', views.ChallanByCompany.as_view()),
 
 
-    # path('get/challan', views.DeliveryRecord.as_view()),
+    # path('get/delivery', views.DeliveryRecordGet.as_view()),
 
     path('get/bill', views.BillGet.as_view()),
     path('bill/detail/<pk>', views.BillDetail.as_view()),

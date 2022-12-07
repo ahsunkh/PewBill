@@ -254,11 +254,11 @@ class PurchaseOrder(models.Model):
             return {}
 
     @staticmethod
-    def update_purchase_order(type=None):
+    def update_purchase_order(id=None, type=None):
         if type is not None:
             try:
-                PurchaseOrder.objects.filter(id=type.get('id')).update(**type)
-                purchase_order = PurchaseOrder.objects.get(id=type.get('id'))
+                purchase_order = PurchaseOrder.objects.filter(id=id).update(**type)
+                # purchase_order = PurchaseOrder.objects.get(id=type.get('id'))
                 return True, purchase_order
             except Exception as err:
                 return False, {}
@@ -288,7 +288,6 @@ class OrderDetail(models.Model):
 
     @staticmethod
     def get_order_details_by_po_no(pk):
-        # print(pk)
         order_details = OrderDetail.objects.filter(purchase_order=pk)
         return order_details
 
@@ -305,19 +304,29 @@ class OrderDetail(models.Model):
         return OrderDetail.objects.bulk_create(OrderDetail(**value) for value in data)
 
     @staticmethod
-    def update_order_detail(type=None):
+    def update_order_detail(id=None, type=None):
         if type is not None:
             try:
-                OrderDetail.objects.filter(id=type.get('id')).update(**type)
-                order_detail = OrderDetail.objects.get(id=type.get('id'))
+                order_detail = OrderDetail.objects.filter(id=id).update(**type)
+                # OrderDetail.objects.filter(id=type.get('id')).update(**type)
+                # order_detail = OrderDetail.objects.get(id=type.get('id'))
                 return True, order_detail
             except Exception as err:
                 return False, {}
         return False, {}
 
     @staticmethod
+    def get_filter_purchase(pk):
+        return OrderDetail.objects.filter(purchase_order=pk)
+
+    @staticmethod
     def get_one_order_detail(pk):
         return OrderDetail.objects.get(id=pk)
+
+    # @staticmethod
+    # def get_one_order_detail_status():
+    #
+    #     return OrderDetail.objects.filter()
 
     @staticmethod
     def delete_single_order_detail(pk):
@@ -340,6 +349,10 @@ class Challan(models.Model):
     def get_challan():
         return Challan.objects.all()
 
+    @staticmethod
+    def get_filter_challan(pk):
+        return Challan.objects.filter(order_detail=pk)
+
     def get_total_challan_registration(start_date, end_date):
         return Challan.objects.values(
             'created_at__date').annotate(
@@ -351,11 +364,10 @@ class Challan(models.Model):
         return Challan.objects.create(**data)
 
     @staticmethod
-    def update_challan(type=None):
-        if type is not None:
+    def update_challan(id=None, data=None):
+        if data is not None:
             try:
-                Challan.objects.filter(id=type.get('id')).update(**type)
-                challan = Challan.objects.get(id=type.get('id'))
+                challan = Challan.objects.filter(id=id).update(**data)
                 return True, challan
             except Exception as err:
                 return False, {}

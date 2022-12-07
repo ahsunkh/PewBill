@@ -1,14 +1,15 @@
 # import Paginator as Paginator
 import datetime
+import pickle
 
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, Challan, \
     Bill, DeliveryRecord
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
     PurchaseOrderSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer, \
-    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer
+    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer, CompanyStatsSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
-from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
+from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED, CHALLAN_NOT_UPDATED
 from django.core.paginator import Paginator
 
 
@@ -79,6 +80,15 @@ def delete_company(id):
         return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
+
+
+def get_companies_stats():
+    try:
+        company = Company().get_company()
+        count = len(company)
+        return {"total_number_of_companies": count}
+    except Exception as err:
+        return Response.internal_server_error(err)
 
 
 """ Category Action 
@@ -249,6 +259,15 @@ def update_purchase_order_act(id=None, request=None):
 def get_single_purchase_order(id):
     try:
         purchase_order = PurchaseOrder().get_one_purchase_order(pk=id)
+        purchase_order_status = purchase_order.is_completed
+        order_detail_filter = OrderDetail.get_filter_purchase(pk=id)
+        for i in order_detail_filter:
+            if i.is_delivered == True:
+                purchase_order_status = True
+                PurchaseOrder.update_purchase_order(id=id, type={"is_completed": purchase_order_status})
+            else:
+                i.is_delivered = False
+                PurchaseOrder.update_purchase_order(id=id, type={"is_completed": i.is_delivered})
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=False).data
         return Response.create_data(purchase_order_serializer)
     except Exception as err:
@@ -301,6 +320,21 @@ def update_order_detail_act(id=None, request=None):
 def get_single_order_detail(id):
     try:
         order_detail = OrderDetail().get_one_order_detail(pk=id)
+        order_total_quantity = order_detail.quantity
+        delivered = order_detail.is_delivered
+        list_challan = Challan.get_filter_challan(pk=id)
+        challan_total_quantity = 0
+
+        for i in list_challan:
+            challan_total_quantity = challan_total_quantity + i.quantity
+
+        if order_total_quantity == challan_total_quantity:
+            if delivered == False:
+                delivered = True
+                OrderDetail.update_order_detail(id=id, type={"is_delivered": delivered})
+        else:
+            delivered = False
+            OrderDetail.update_order_detail(id=id, type={"is_delivered": delivered})
         order_detail_serializer = OrderDetailSerializer(order_detail, many=False).data
         return Response.create_data(order_detail_serializer)
     except Exception as err:
@@ -405,11 +439,11 @@ def update_challan_act(id=None, request=None):
     try:
         data = request.data
         data.update({"id": id})
-        is_updated, challan = Challan().update_challan(type=data)
+        is_updated, challan = Challan().update_challan(id=id, data=data)
         if is_updated:
-            challan_serializer = OrderDetailSerializer(challan).data
+            challan_serializer = ChallanSerializer(challan).data
             return Response.create_data(challan_serializer, status=SUCCESS_STATUS_CODE)
-        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+        return Response.error(error_response=CHALLAN_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -417,8 +451,7 @@ def update_challan_act(id=None, request=None):
 def get_single_challan(id):
     try:
         challan = Challan().get_one_challan(pk=id)
-        challan_serializer = ChallanSerializer(challan, many=True).data
-
+        challan_serializer = ChallanSerializer(challan, many=False).data
         return Response.create_data(challan_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
