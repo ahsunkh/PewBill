@@ -37,14 +37,13 @@ def user_signup_email(data):
         password = generate_password_hash(data.get('password'))
         data["password"] = password
         data['role'] = Roles.get_role_by_id(id=data.get('role'))
-
         user_name = build_user_name(first_name=data['first_name'], last_name=data['last_name'])
         data.update({"user_name": user_name})
         users = Users.create_email_user(data=data)
         if users:
-            return Response.success("user created")
+            user_serializer = UsersSerializer(users, many=False).data
+            return Response.create_data(user_serializer)
         return Response.error(error_response=USER_DOES_NOT_CREATED, status=ERROR_STATUS_CODE_FORBIDDEN)
-
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -124,14 +123,42 @@ def update_user(id=None, data=None):
         return Response.internal_server_error(str(err))
 
 
-def forget_password_action(data):
+def user_forget_password(data):
+    if Users.check_email_user(email=data["email"]):
+        send_otp = PewBillOTP().create_otp(data['email'])
+        content = PewBillTemplate().otp_mail_template_func(otp=send_otp)
+        if SendEmail().send_email(reciever=data["email"], name=data["name"], subject="Forgot password",
+                                  content=content):
+            return Response.success("otp has been sent to your mail")
+        return Response.error("invalid email address")
+    return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_FORBIDDEN)
+
+
+def user_verify_forgot_otp(data):
     try:
-        user = Users.get_user_by_email(email=data.get('email'))
-        password = generate_password_hash(data['password'])
+        email_data = {"otp": data.get('otp'), "email": data.get('email')}
+        if PewBillOTP().verify_otp_email(data=email_data):
+            user = Users.get_user_by_email(email=data.get('email'))
+            access, refresh = PewBillJWT().create_jwt(user)
+            user_serializer = UsersSerializer(user).data
+            user_serializer.update({"token": access,
+                                    "refresh": str(refresh),
+                                    "platform": "email"})
+            user.save()
+        return Response.success("OTP has been Verified")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def update_forget_password(data):
+    try:
+        user = Users.get_user_by_email(email=data['email'])
+        password = generate_password_hash(data['new_password'])
         user.password = password
         user.save()
-        user_serializer = UsersSerializer(user, many=False).data
-        return user_serializer
+        if user:
+            return Response.success("Password has been changed")
+        return Response.error("invalid email address")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -183,15 +210,15 @@ def get_po_data_for_company_a(data):
         # total_amount = new_data[46]["LineText"], new_data[52]["LineText"], new_data[57]["LineText"], new_data[63][
         #     "LineText"], new_data[69]["LineText"], new_data[75]["LineText"], new_data[81]["LineText"]
         # for item in new_data:
-            # if item['LineText']['TOTAL'] == item['LineText']['ORDER TOTAL']:
+        # if item['LineText']['TOTAL'] == item['LineText']['ORDER TOTAL']:
 
-            # print(item['LineText'])
-           # print(item['LineText'])
-            # data_1=item['LineText']
-            # print(data_1)
-            # data_2=data_1['TOTAL']
-            # print(data_2)
-            # break
+        # print(item['LineText'])
+        # print(item['LineText'])
+        # data_1=item['LineText']
+        # print(data_1)
+        # data_2=data_1['TOTAL']
+        # print(data_2)
+        # break
         data = {"purchase_order_number": po_number[-7::],
                 "purchase_order_date": purchase_order_date,
                 "delivery_date": delivery_date}

@@ -7,9 +7,10 @@ urlpatterns = [
     path('signin/email', views.SigninEmail.as_view()),
     path('signin/email/verifyOTP', views.SigninEmailVerifyOTP.as_view()),
     path('user/update/<pk>', views.UserUpdateDetail.as_view()),
-    path('user/forget/password', views.UserForgetPassword.as_view()),
+    path('forget/password', views.UserForgetPassword.as_view()),
+    path('forget/password/verify/otp', views.VerifyForgetPassword.as_view()),
+    path('update/password', views.UpdateForgetPassword.as_view()),
     path('user/delete/<pk>', views.UserDelete.as_view()),
-    path('user/delete', views.UserLogOut.as_view()),
-    # path('checking/file', views.CheckingFile.as_view()),
+    path('user/logout', views.UserLogOut.as_view()),
     path('retrieve/po-data', views.RetrievePurchaseOrderData.as_view()),
 ]

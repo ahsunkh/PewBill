@@ -1,16 +1,18 @@
-# import Paginator as Paginator
 import datetime
-import pickle
 
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, Challan, \
     Bill, DeliveryRecord
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
     PurchaseOrderSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer, \
-    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer, CompanyStatsSerializer
+    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
-from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED, CHALLAN_NOT_UPDATED
+from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED, CHALLAN_NOT_UPDATED, \
+    BILL_NOT_UPDATED, CATEGORY_NOT_UPDATED, \
+    PURCHASE_ORDER_NOT_UPDATED, ORDER_DETAIL_NOT_UPDATED
 from django.core.paginator import Paginator
+
+from scripts.sendEmail import SendEmail
 
 
 def get_all_user_pagination(page, limit):
@@ -121,7 +123,7 @@ def update_category_act(id=None, request=None):
         if is_updated:
             category_serializer = CategorySerializer(category).data
             return Response.create_data(category_serializer, status=SUCCESS_STATUS_CODE)
-        return Response.error(error_response=COMPANY_NOT_UPDATED, status=ERROR_STATUS_CODE)
+        return Response.error(error_response=CATEGORY_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -251,7 +253,7 @@ def update_purchase_order_act(id=None, request=None):
         if is_updated:
             purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
             return Response.create_data(purchase_order_serializer, status=SUCCESS_STATUS_CODE)
-        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+        return Response.error(error_response=PURCHASE_ORDER_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -259,15 +261,13 @@ def update_purchase_order_act(id=None, request=None):
 def get_single_purchase_order(id):
     try:
         purchase_order = PurchaseOrder().get_one_purchase_order(pk=id)
-        purchase_order_status = purchase_order.is_completed
         order_detail_filter = OrderDetail.get_filter_purchase(pk=id)
         for i in order_detail_filter:
-            if i.is_delivered == True:
+            print(i.is_delivered == True)
+            if i.is_delivered:
                 purchase_order_status = True
                 PurchaseOrder.update_purchase_order(id=id, type={"is_completed": purchase_order_status})
-            else:
-                i.is_delivered = False
-                PurchaseOrder.update_purchase_order(id=id, type={"is_completed": i.is_delivered})
+        purchase_order = PurchaseOrder().get_one_purchase_order(pk=id)
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=False).data
         return Response.create_data(purchase_order_serializer)
     except Exception as err:
@@ -308,11 +308,11 @@ def update_order_detail_act(id=None, request=None):
     try:
         data = request.data
         data.update({"id": id})
-        is_updated, order_detail = OrderDetail().update_order_detail(type=data)
+        is_updated, order_detail = OrderDetail().update_order_detail(data_order_detail=data)
         if is_updated:
             order_detail_serializer = OrderDetailSerializer(order_detail).data
             return Response.create_data(order_detail_serializer, status=SUCCESS_STATUS_CODE)
-        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+        return Response.error(error_response=ORDER_DETAIL_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -321,20 +321,16 @@ def get_single_order_detail(id):
     try:
         order_detail = OrderDetail().get_one_order_detail(pk=id)
         order_total_quantity = order_detail.quantity
-        delivered = order_detail.is_delivered
-        list_challan = Challan.get_filter_challan(pk=id)
+        list_challan = Challan.get_all_challan_by_order_id(pk=id)
         challan_total_quantity = 0
 
         for i in list_challan:
             challan_total_quantity = challan_total_quantity + i.quantity
 
         if order_total_quantity == challan_total_quantity:
-            if delivered == False:
-                delivered = True
-                OrderDetail.update_order_detail(id=id, type={"is_delivered": delivered})
-        else:
-            delivered = False
-            OrderDetail.update_order_detail(id=id, type={"is_delivered": delivered})
+            delivered = True
+            OrderDetail.update_order_detail(id=id, data_order_detail={"is_delivered": delivered})
+        order_detail = OrderDetail().get_one_order_detail(pk=id)
         order_detail_serializer = OrderDetailSerializer(order_detail, many=False).data
         return Response.create_data(order_detail_serializer)
     except Exception as err:
@@ -421,15 +417,11 @@ def create_challan_act(data):
     try:
         order_detail_obj = OrderDetail.get_one_order_detail(pk=data.get("order_detail"))
         data["order_detail"] = order_detail_obj
-
         challan = Challan().create_challan(data=data)
-
         dic_ = {"order_detail": order_detail_obj,
                 "quantity_delivered": data.get("quantity")}
-
         DeliveryRecord.create_delivery_record(dic_)
         challan_serializer = ChallanSerializer(challan).data
-
         return Response.create_data(challan_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -453,6 +445,19 @@ def get_single_challan(id):
         challan = Challan().get_one_challan(pk=id)
         challan_serializer = ChallanSerializer(challan, many=False).data
         return Response.create_data(challan_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_single_challan_send_by_email(id):
+    try:
+        challan = Challan().get_one_challan(pk=id)
+        challan_serializer = ChallanSerializer(challan, many=False).data
+        content = str(challan_serializer)
+        subject = "Challan Receipt"
+        if SendEmail.send_email(reciever="ahsun45@gmail.com", subject=subject, content=content, name="PewBill"):
+            return Response.success("Challan sent on email")
+        return Response.error("Challan is not sent on email yet")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -567,7 +572,7 @@ def update_bill_act(id=None, request=None):
         if is_updated:
             bill_serializer = BillSerializer(bill).data
             return Response.create_data(bill_serializer, status=SUCCESS_STATUS_CODE)
-        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+        return Response.error(error_response=BILL_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -577,6 +582,19 @@ def get_single_bill(id):
         bill = Bill().get_one_bill(pk=id)
         bill_serializer = BillSerializer(bill, many=False).data
         return Response.create_data(bill_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_single_bill_send_by_email(id):
+    try:
+        bill = Bill().get_one_bill(pk=id)
+        bill_serializer = BillSerializer(bill, many=False).data
+        content = str(bill_serializer)
+        subject = "Bill Receipt"
+        if SendEmail.send_email(reciever="ahsun45@gmail.com", subject=subject, content=content, name="PewBill"):
+            return Response.success("Bill sent on email")
+        return Response.error("Bill is not set on email yet")
     except Exception as err:
         return Response.internal_server_error(str(err))
 

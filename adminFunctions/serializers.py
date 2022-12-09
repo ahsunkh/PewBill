@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from loginAndRegister.models import Company, Category, Product, PurchaseOrder, OrderDetail, Challan, Bill
+from loginAndRegister.models import Company, Category, Product, PurchaseOrder, OrderDetail, Challan, Bill, \
+    DeliveryRecord
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -60,11 +61,10 @@ class BillSerializer(serializers.ModelSerializer):
 
 
 class DeliveryRecordSerializer(serializers.ModelSerializer):
-    # product = ProductSerializer(read_only=True)
     order_detail = OrderDetailSerializer(read_only=True)
 
     class Meta:
-        model = Bill
+        model = DeliveryRecord
         fields = "__all__"
 
 
@@ -75,14 +75,6 @@ class PoStatsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = ['created_at__date', 'count']
-
-
-class CompanyStatsSerializer(serializers.ModelSerializer):
-    count = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = Company
-        fields = ['count']
 
 
 class ChallanStatsSerializer(serializers.ModelSerializer):

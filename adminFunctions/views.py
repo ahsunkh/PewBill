@@ -466,9 +466,25 @@ class ChallanDetail(APIView):
             return Response.error(str(err))
 
 
+class ChallanSendByEmail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_challan_send_by_email(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
 class ChallanByCompany(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
+    @staticmethod
     def get(request, pk=None):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
@@ -549,6 +565,21 @@ class BillDetail(APIView):
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
                 return delete_bill(id=pk)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class BillSendByEmail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_bill_send_by_email(id=pk)
+            return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
 

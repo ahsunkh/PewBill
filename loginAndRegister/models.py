@@ -258,7 +258,6 @@ class PurchaseOrder(models.Model):
         if type is not None:
             try:
                 purchase_order = PurchaseOrder.objects.filter(id=id).update(**type)
-                # purchase_order = PurchaseOrder.objects.get(id=type.get('id'))
                 return True, purchase_order
             except Exception as err:
                 return False, {}
@@ -304,12 +303,10 @@ class OrderDetail(models.Model):
         return OrderDetail.objects.bulk_create(OrderDetail(**value) for value in data)
 
     @staticmethod
-    def update_order_detail(id=None, type=None):
+    def update_order_detail(id=None, data_order_detail=None):
         if type is not None:
             try:
-                order_detail = OrderDetail.objects.filter(id=id).update(**type)
-                # OrderDetail.objects.filter(id=type.get('id')).update(**type)
-                # order_detail = OrderDetail.objects.get(id=type.get('id'))
+                order_detail = OrderDetail.objects.filter(id=id).update(**data_order_detail)
                 return True, order_detail
             except Exception as err:
                 return False, {}
@@ -322,11 +319,6 @@ class OrderDetail(models.Model):
     @staticmethod
     def get_one_order_detail(pk):
         return OrderDetail.objects.get(id=pk)
-
-    # @staticmethod
-    # def get_one_order_detail_status():
-    #
-    #     return OrderDetail.objects.filter()
 
     @staticmethod
     def delete_single_order_detail(pk):
@@ -348,10 +340,6 @@ class Challan(models.Model):
     @staticmethod
     def get_challan():
         return Challan.objects.all()
-
-    @staticmethod
-    def get_filter_challan(pk):
-        return Challan.objects.filter(order_detail=pk)
 
     def get_total_challan_registration(start_date, end_date):
         return Challan.objects.values(
@@ -417,6 +405,10 @@ class Bill(models.Model):
     def get_bill(company):
         return Bill.objects.filter(company=company).prefetch_related('challan')
 
+    @staticmethod
+    def get_bill_with_challan():
+        return Bill.objects.filter.prefetch_related('challan').all()
+
     def get_total_bill_registration(start_date, end_date):
         return Bill.objects.values(
             'created_at__date').annotate(
@@ -436,6 +428,7 @@ class Bill(models.Model):
                 return True, bill
             except Exception as err:
                 return False, {}
+
         return False, {}
 
     @staticmethod

@@ -29,14 +29,17 @@ urlpatterns = [
 
     path('get/challan', views.ChallanGet.as_view()),
     path('challan/detail/<pk>', views.ChallanDetail.as_view()),
+    path('challan/sendbyemail/<pk>', views.ChallanSendByEmail.as_view()),
+
 
     path('challan/company/<pk>', views.ChallanByCompany.as_view()),
 
 
-    # path('get/delivery', views.DeliveryRecordGet.as_view()),
+    path('get/delivery', views.DeliveryRecordGet.as_view()),
 
     path('get/bill', views.BillGet.as_view()),
     path('bill/detail/<pk>', views.BillDetail.as_view()),
+    path('bill/sendbyemail/<pk>', views.BillSendByEmail.as_view()),
 
     path('retrieve/bill/date', views.BillStats.as_view()),
     path('check/quantity', views.CheckQuantity.as_view()),
