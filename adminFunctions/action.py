@@ -1,4 +1,7 @@
 import datetime
+import os
+
+import pdfkit
 
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, Challan, \
     Bill, DeliveryRecord
@@ -249,7 +252,8 @@ def update_purchase_order_act(id=None, request=None):
     try:
         data = request.data
         data.update({"id": id})
-        is_updated, purchase_order = PurchaseOrder().update_purchase_order(type=data)
+
+        is_updated, purchase_order = PurchaseOrder().update_purchase_order(id=id, update_data=data)
         if is_updated:
             purchase_order_serializer = PurchaseOrderSerializer(purchase_order).data
             return Response.create_data(purchase_order_serializer, status=SUCCESS_STATUS_CODE)
@@ -266,7 +270,7 @@ def get_single_purchase_order(id):
             print(i.is_delivered == True)
             if i.is_delivered:
                 purchase_order_status = True
-                PurchaseOrder.update_purchase_order(id=id, type={"is_completed": purchase_order_status})
+                PurchaseOrder.update_purchase_order(id=id, update_data={"is_completed": purchase_order_status})
         purchase_order = PurchaseOrder().get_one_purchase_order(pk=id)
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=False).data
         return Response.create_data(purchase_order_serializer)
@@ -454,20 +458,32 @@ def get_single_challan_send_by_email(id):
         challan = Challan().get_one_challan(pk=id)
         challan_serializer = ChallanSerializer(challan, many=False).data
         content = str(challan_serializer)
-        subject = "Challan Receipt"
-        if SendEmail.send_email(reciever="ahsun45@gmail.com", subject=subject, content=content, name="PewBill"):
-            return Response.success("Challan sent on email")
+        subject = "Check attachment"
+        if SendEmail.send_email(reciever="ahsun45@gmail.com", attachment=True, name="PewBill", subject=subject,
+                                content=content,
+                                file_name="challan.pdf"):
+            return Response.success("Bill sent on email")
         return Response.error("Challan is not sent on email yet")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
 
-def get_single_challan_by_company(id):
-    try:
-        challan = Challan().get_one_challan_by_company(pk=id)
-        challan_serializer = ChallanSerializer(challan, many=True).data
+from pathlib import Path
 
-        return Response.create_data(challan_serializer)
+
+def get_single_challan_download(id):
+    try:
+        challan = Challan().get_one_challan(pk=id)
+        challan_serializer = ChallanSerializer(challan, many=False).data
+        file_content = str(challan_serializer)
+        f = open("demofile2.text", "a")
+        f.write(file_content)
+        f.close()
+        f = open("demofile2.text", "r")
+        # print(f.read())
+        pdfkit.from_file(f, 'challan.pdf')
+
+        return Response.success("File has been downloaded")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -581,7 +597,30 @@ def get_single_bill(id):
     try:
         bill = Bill().get_one_bill(pk=id)
         bill_serializer = BillSerializer(bill, many=False).data
+        print(BillSerializer(bill, many=False).field_name)
         return Response.create_data(bill_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+import mimetypes
+
+from email.message import EmailMessage
+
+
+def get_single_bill_download(id):
+    try:
+        bill = Bill().get_one_bill(pk=id)
+        bill_serializer = BillSerializer(bill, many=False).data
+        file_content = str(bill_serializer)
+        f = open("bill24.text", "a")
+        f.write(file_content)
+        f.close()
+        f = open("bill24.text", "r")
+        pdfkit.from_file(f, 'bill24.pdf')
+
+        return Response.success("File has been downloaded")
+
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -591,8 +630,10 @@ def get_single_bill_send_by_email(id):
         bill = Bill().get_one_bill(pk=id)
         bill_serializer = BillSerializer(bill, many=False).data
         content = str(bill_serializer)
-        subject = "Bill Receipt"
-        if SendEmail.send_email(reciever="ahsun45@gmail.com", subject=subject, content=content, name="PewBill"):
+        subject = "Check attachment"
+        if SendEmail.send_email(reciever="ahsun45@gmail.com", attachment=True, name="PewBill", subject=subject,
+                                content=content,
+                                file_name="bill24.pdf"):
             return Response.success("Bill sent on email")
         return Response.error("Bill is not set on email yet")
     except Exception as err:

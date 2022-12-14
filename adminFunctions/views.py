@@ -267,6 +267,7 @@ class PurchaseOrderDetail(APIView):
                 return update_purchase_order_act(id=pk, request=request)
             return Response.error(INVALID_DATA)
         except Exception as err:
+            raise
             return Response.error(str(err))
 
     @staticmethod
@@ -481,6 +482,21 @@ class ChallanSendByEmail(APIView):
             return Response.error(str(err))
 
 
+class ChallanPDF(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_challan_download(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
 class ChallanByCompany(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -584,6 +600,21 @@ class BillSendByEmail(APIView):
             return Response.error(str(err))
 
 
+class BillDownloadPDF(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_bill_download(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
 class BillStats(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -600,7 +631,7 @@ class BillStats(APIView):
             return Response.error(str(err))
 
 
-class CheckQuantity(APIView):
+class OrderDetailCheckQuantity(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod

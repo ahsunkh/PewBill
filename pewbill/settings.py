@@ -171,7 +171,7 @@ SIMPLE_JWT = {
 
 # sendInBLue
 SEND_IN_BLUE_API_KEY = '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'
-SENDER_IN_BLUE = {"name": "Ahsun", "email": "ahsun45@gmail.com"}
+SENDER_IN_BLUE = {"name": "PEWBILL", "email": "ahsun45@gmail.com"}
 
 # ocr_space
 OCR_SPACE_API_KEY = 'K81452566188957'

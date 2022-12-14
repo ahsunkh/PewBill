@@ -49,12 +49,11 @@ class UserUpdateDetail(APIView):
     permission_classes = [IsAuthenticated]
 
     @staticmethod
-    def put(request, pk=None):
+    def put(request):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
-            print(request)
             if user_id:
-                return update_user(id=pk, data=request.data)
+                return update_user(user_id, data=request.data)
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
@@ -100,11 +99,11 @@ class UserDelete(APIView):
     permission_classes = [IsAuthenticated]
 
     @staticmethod
-    def delete(request, pk=None):
+    def delete(request):
         try:
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
-                return delete_user(id=pk)
+                return delete_user(user_id)
         except Exception as err:
             return Response.error(str(err))
 

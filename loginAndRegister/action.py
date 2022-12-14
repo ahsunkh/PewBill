@@ -72,7 +72,7 @@ def user_signin_email(data):
                 users.jwt_token.append(access)
                 users.save()
                 return Response.create_data(created_data_response=users_serializer, status=SUCCESS_STATUS_CODE)
-            return Response.error("invalid password")
+            return Response.error("invalid password or email")
         return Response.error(USER_DOES_NOT_EXIST)
 
     except Exception as err:
@@ -98,23 +98,33 @@ def verify_user_email_signin_otp(data):
         return Response.internal_server_error(str(err))
 
 
-def update_user(id=None, data=None):
+def update_user(user_id=None, data=None):
     try:
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
 
         if 'email' in data:
             return Response.error(error_response="You can not update your email",
                                   status=ERROR_STATUS_CODE)
-
+        if 'user_name' in data:
+            return Response.error(error_response="You can not update your username",
+                                  status=ERROR_STATUS_CODE)
         if 'password' in data:
             dict_a = {}
             password = generate_password_hash(data.get('password'))
             dict_a["password"] = password
-            is_updated, user = Users.update_model_user(id=id, update_data=dict_a)
+            is_updated, user = Users.update_model_user(id=user_id, update_data=dict_a)
             if is_updated:
                 user_serializer = UsersSerializer(user).data
                 return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
 
-        is_updated, user = Users.update_model_user(id=id, update_data=data)
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
+
+        is_updated, user = Users.update_model_user(id=user_id, update_data=data)
+
         if is_updated:
             user_serializer = UsersSerializer(user).data
             return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
@@ -127,7 +137,7 @@ def user_forget_password(data):
     if Users.check_email_user(email=data["email"]):
         send_otp = PewBillOTP().create_otp(data['email'])
         content = PewBillTemplate().otp_mail_template_func(otp=send_otp)
-        if SendEmail().send_email(reciever=data["email"], name=data["name"], subject="Forgot password",
+        if SendEmail().send_email(reciever=data["email"], subject="Forgot password",
                                   content=content):
             return Response.success("otp has been sent to your mail")
         return Response.error("invalid email address")
@@ -163,9 +173,12 @@ def update_forget_password(data):
         return Response.internal_server_error(str(err))
 
 
-def delete_user(id):
+def delete_user(user_id):
     try:
-        Users.delete_single_user(pk=id)
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
+        Users.delete_single_user(pk=user_id)
         return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))

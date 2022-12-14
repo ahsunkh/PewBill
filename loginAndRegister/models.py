@@ -82,7 +82,7 @@ class Users(models.Model):
 
     @staticmethod
     def update_model_user(id=None, update_data=None):
-        if type is not None:
+        if update_data is not None:
             try:
                 Users.objects.filter(id=id).update(**update_data)
                 user = Users.objects.get(id=id)
@@ -254,12 +254,14 @@ class PurchaseOrder(models.Model):
             return {}
 
     @staticmethod
-    def update_purchase_order(id=None, type=None):
-        if type is not None:
+    def update_purchase_order(id=None, update_data=None):
+        print(update_data,222222222222222)
+        if update_data is not None:
             try:
-                purchase_order = PurchaseOrder.objects.filter(id=id).update(**type)
+                purchase_order = PurchaseOrder.objects.filter(id=id).update(**update_data)
                 return True, purchase_order
             except Exception as err:
+                print(err)
                 return False, {}
         return False, {}
 
@@ -304,11 +306,12 @@ class OrderDetail(models.Model):
 
     @staticmethod
     def update_order_detail(id=None, data_order_detail=None):
-        if type is not None:
+        if data_order_detail is not None:
             try:
                 order_detail = OrderDetail.objects.filter(id=id).update(**data_order_detail)
                 return True, order_detail
             except Exception as err:
+                print(err)
                 return False, {}
         return False, {}
 
