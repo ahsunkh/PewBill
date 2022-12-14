@@ -235,9 +235,10 @@ class PurchaseOrderGet(APIView):
     @staticmethod
     def get(request):
         try:
+            company_id = request.GET.get('company_id')
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
-                return Response.create_data(get_all_purchase_order())
+                return Response.create_data(get_all_purchase_order(company_id=company_id))
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
@@ -291,15 +292,16 @@ class PurchaseOrderDetail(APIView):
             return Response.error(str(err))
 
 
-class OderDetailGet(APIView):
+class OrderDetailManagement(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     def get(request):
         try:
+            po_id = request.GET.get('po_id')
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
-                return Response.create_data(get_all_order_detail())
+                return Response.create_data(get_all_order_detail(po_id=po_id))
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
@@ -381,15 +383,16 @@ class PewStats(APIView):
             return Response.error(str(err))
 
 
-class ChallanGet(APIView):
+class ChallanManagement(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
     def get(request):
         try:
+            company_id = request.GET.get('company_id')
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
-                return Response.create_data(get_all_challan())
+                return Response.create_data(get_all_challan(company_id=company_id))
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
@@ -525,7 +528,7 @@ class DeliveryRecordGet(APIView):
             return Response.error(str(err))
 
 
-class BillGet(APIView):
+class BillManagement(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod

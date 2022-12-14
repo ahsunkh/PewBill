@@ -235,8 +235,8 @@ class PurchaseOrder(models.Model):
         db_table = "PurchaseOrder"
 
     @staticmethod
-    def get_purchase_order():
-        return PurchaseOrder.objects.all()
+    def get_purchase_order(company_id):
+        return PurchaseOrder.objects.filter(company_id=company_id)
 
     def get_total_po_registration(start_date, end_date):
         return PurchaseOrder.objects.values(
@@ -293,8 +293,8 @@ class OrderDetail(models.Model):
         return order_details
 
     @staticmethod
-    def get_order_detail():
-        return OrderDetail.objects.all()
+    def get_order_detail(po_id):
+        return OrderDetail.objects.filter(purchase_order=po_id)
 
     @staticmethod
     def create_order_detail(data):
@@ -341,8 +341,8 @@ class Challan(models.Model):
         db_table = "Challan"
 
     @staticmethod
-    def get_challan():
-        return Challan.objects.all()
+    def get_challan(company_id):
+        return Challan.objects.filter(order_detail__purchase_order__company_id=company_id)
 
     def get_total_challan_registration(start_date, end_date):
         return Challan.objects.values(

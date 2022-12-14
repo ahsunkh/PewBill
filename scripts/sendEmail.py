@@ -12,7 +12,7 @@ class SendEmail():
         self.name = "GetLoopSendEmail"
 
     @staticmethod
-    def send_email(reciever, name, subject, content, attachment=False, file_name=None):
+    def send_email(reciever, name, subject, content, attachment=False, file_name=None, name_file=None):
         try:
             configuration = sib_api_v3_sdk.Configuration()
             configuration.api_key['api-key'] = SEND_IN_BLUE_API_KEY
@@ -27,7 +27,7 @@ class SendEmail():
                     encoded_string = base64.b64encode(file.read())
                     base64_message = encoded_string.decode('utf-8')
 
-                attachment = [{"content": base64_message, "name": filename}]
+                attachment = [{"content": base64_message, "name": name_file}]
                 send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(to=to, attachment=attachment, html_content=content,
                                                                sender=sender, subject=subject)
                 api_response = api_instance.send_transac_email(send_smtp_email)

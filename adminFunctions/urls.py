@@ -20,14 +20,15 @@ urlpatterns = [
 
     path('retrieve/p_o', views.PewStats.as_view()),
 
-    path('get/orderdetail', views.OderDetailGet.as_view()),
+    path('get/order-detail', views.OrderDetailManagement.as_view()),
     path('oderdetail/detail/<pk>', views.OrderDetailDetail.as_view()),
 
     path('retrieve/order_detail/<pk>', views.GetPurchaseOrderByON.as_view()),
 
     path('retrieve/challan/date', views.ChallanStats.as_view()),
 
-    path('get/challan', views.ChallanGet.as_view()),
+    path('get/challan', views.ChallanManagement.as_view()),
+
     path('challan/detail/<pk>', views.ChallanDetail.as_view()),
     path('challan/sendbyemail/<pk>', views.ChallanSendByEmail.as_view()),
     path('challan/download/<pk>', views.ChallanPDF.as_view()),
@@ -38,7 +39,7 @@ urlpatterns = [
 
     path('get/delivery', views.DeliveryRecordGet.as_view()),
 
-    path('get/bill', views.BillGet.as_view()),
+    path('get/bill', views.BillManagement.as_view()),
     path('bill/detail/<pk>', views.BillDetail.as_view()),
     path('bill/download/<pk>', views.BillDownloadPDF.as_view()),
     path('bill/sendbyemail/<pk>', views.BillSendByEmail.as_view()),

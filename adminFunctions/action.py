@@ -3,6 +3,7 @@ import os
 
 import pdfkit
 
+import templates.challan_template
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, Challan, \
     Bill, DeliveryRecord
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
@@ -208,9 +209,9 @@ def delete_product(id):
     so it providing purchase order functions"""
 
 
-def get_all_purchase_order():
+def get_all_purchase_order(company_id):
     try:
-        purchase_order = PurchaseOrder().get_purchase_order()
+        purchase_order = PurchaseOrder().get_purchase_order(company_id=company_id)
         purchase_order_serializer = PurchaseOrderSerializer(purchase_order, many=True).data
         return purchase_order_serializer
     except Exception as err:
@@ -290,9 +291,9 @@ def delete_purchase_order(id):
     so it providing oder detail functions"""
 
 
-def get_all_order_detail():
+def get_all_order_detail(po_id):
     try:
-        order_detail = OrderDetail().get_order_detail()
+        order_detail = OrderDetail().get_order_detail(po_id=po_id)
         order_detail_serializer = OrderDetailSerializer(order_detail, many=True).data
         return order_detail_serializer
     except Exception as err:
@@ -385,9 +386,9 @@ def get_po_registration_stats(start_date, end_date):
     so it providing challan functions"""
 
 
-def get_all_challan():
+def get_all_challan(company_id):
     try:
-        challan = Challan().get_challan()
+        challan = Challan().get_challan(company_id=company_id)
         challan_serializer = ChallanSerializer(challan, many=True).data
         return challan_serializer
     except Exception as err:
@@ -425,6 +426,12 @@ def create_challan_act(data):
         dic_ = {"order_detail": order_detail_obj,
                 "quantity_delivered": data.get("quantity")}
         DeliveryRecord.create_delivery_record(dic_)
+
+        product_name = challan.order_detail.product.name
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
+        pdfkit.from_string(content_for_pdf, path_for_challan)
+
         challan_serializer = ChallanSerializer(challan).data
         return Response.create_data(challan_serializer)
     except Exception as err:
@@ -456,32 +463,28 @@ def get_single_challan(id):
 def get_single_challan_send_by_email(id):
     try:
         challan = Challan().get_one_challan(pk=id)
-        challan_serializer = ChallanSerializer(challan, many=False).data
-        content = str(challan_serializer)
-        subject = "Check attachment"
-        if SendEmail.send_email(reciever="ahsun45@gmail.com", attachment=True, name="PewBill", subject=subject,
+        content = "Please find the attached challan"
+        subject = "Challan"
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        name_file = str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        if SendEmail.send_email(reciever="m.affan@codexnow.com", attachment=True, name="PewBill", subject=subject,
                                 content=content,
-                                file_name="challan.pdf"):
-            return Response.success("Bill sent on email")
-        return Response.error("Challan is not sent on email yet")
+                                file_name=path_for_challan,
+                                name_file=name_file):
+            return Response.success("Challan successfully sent on email")
+        return Response.error("Error on sending challan.")
     except Exception as err:
         return Response.internal_server_error(str(err))
-
-
-from pathlib import Path
 
 
 def get_single_challan_download(id):
     try:
         challan = Challan().get_one_challan(pk=id)
-        challan_serializer = ChallanSerializer(challan, many=False).data
-        file_content = str(challan_serializer)
-        f = open("demofile2.text", "a")
-        f.write(file_content)
-        f.close()
-        f = open("demofile2.text", "r")
-        # print(f.read())
-        pdfkit.from_file(f, 'challan.pdf')
+
+        product_name = challan.order_detail.product.name
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
+        pdfkit.from_string(content_for_pdf, path_for_challan)
 
         return Response.success("File has been downloaded")
     except Exception as err:
