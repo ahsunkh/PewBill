@@ -15,13 +15,13 @@ urlpatterns = [
     path('get/product', views.ProductGet.as_view()),
     path('product/detail/<pk>', views.ProductDetail.as_view()),
 
-    path('get/purchaseorder', views.PurchaseOrderGet.as_view()),
+    path('get/purchaseorder', views.PurchaseOrderManagement.as_view()),
     path('purchaseorder/detail/<pk>', views.PurchaseOrderDetail.as_view()),
 
     path('retrieve/p_o', views.PewStats.as_view()),
 
     path('get/order-detail', views.OrderDetailManagement.as_view()),
-    path('oderdetail/detail/<pk>', views.OrderDetailDetail.as_view()),
+    path('order-detail/<pk>', views.OrderDetailDetail.as_view()),
 
     path('retrieve/order_detail/<pk>', views.GetPurchaseOrderByON.as_view()),
 

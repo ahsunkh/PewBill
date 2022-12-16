@@ -324,6 +324,10 @@ class OrderDetail(models.Model):
         return OrderDetail.objects.get(id=pk)
 
     @staticmethod
+    def check_order_detail_by_id(id):
+        return OrderDetail.objects.filter(id=id).exists()
+
+    @staticmethod
     def delete_single_order_detail(pk):
         order_detail = OrderDetail.objects.get(id=pk)
         order_detail.delete()

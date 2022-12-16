@@ -229,7 +229,7 @@ class ProductDetail(APIView):
             return Response.error(str(err))
 
 
-class PurchaseOrderGet(APIView):
+class PurchaseOrderManagement(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     @staticmethod
@@ -534,7 +534,7 @@ class BillManagement(APIView):
     @staticmethod
     def get(request):
         try:
-            company = request.GET.get('company')
+            company = request.GET.get('company_id')
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
                 return Response.create_data(get_all_bill(company=company))

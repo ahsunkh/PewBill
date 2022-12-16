@@ -324,20 +324,22 @@ def update_order_detail_act(id=None, request=None):
 
 def get_single_order_detail(id):
     try:
-        order_detail = OrderDetail().get_one_order_detail(pk=id)
-        order_total_quantity = order_detail.quantity
-        list_challan = Challan.get_all_challan_by_order_id(pk=id)
-        challan_total_quantity = 0
+        if OrderDetail().check_order_detail_by_id(id=id):
+            order_detail = OrderDetail().get_one_order_detail(pk=id)
+            order_total_quantity = order_detail.quantity
+            list_challan = Challan.get_all_challan_by_order_id(pk=id)
+            challan_total_quantity = 0
 
-        for i in list_challan:
-            challan_total_quantity = challan_total_quantity + i.quantity
+            for i in list_challan:
+                challan_total_quantity = challan_total_quantity + i.quantity
 
-        if order_total_quantity == challan_total_quantity:
-            delivered = True
-            OrderDetail.update_order_detail(id=id, data_order_detail={"is_delivered": delivered})
-        order_detail = OrderDetail().get_one_order_detail(pk=id)
-        order_detail_serializer = OrderDetailSerializer(order_detail, many=False).data
-        return Response.create_data(order_detail_serializer)
+            if order_total_quantity == challan_total_quantity:
+                delivered = True
+                OrderDetail.update_order_detail(id=id, data_order_detail={"is_delivered": delivered})
+            order_detail = OrderDetail().get_one_order_detail(pk=id)
+            order_detail_serializer = OrderDetailSerializer(order_detail, many=False).data
+            return Response.create_data(order_detail_serializer)
+        return Response.error("The provided order_id is invalid")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -428,7 +430,8 @@ def create_challan_act(data):
         DeliveryRecord.create_delivery_record(dic_)
 
         product_name = challan.order_detail.product.name
-        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(
+            challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
         content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
         pdfkit.from_string(content_for_pdf, path_for_challan)
 
@@ -465,8 +468,10 @@ def get_single_challan_send_by_email(id):
         challan = Challan().get_one_challan(pk=id)
         content = "Please find the attached challan"
         subject = "Challan"
-        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
-        name_file = str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(
+            challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        name_file = str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(
+            challan.id) + '.pdf'
         if SendEmail.send_email(reciever="m.affan@codexnow.com", attachment=True, name="PewBill", subject=subject,
                                 content=content,
                                 file_name=path_for_challan,
@@ -482,7 +487,8 @@ def get_single_challan_download(id):
         challan = Challan().get_one_challan(pk=id)
 
         product_name = challan.order_detail.product.name
-        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(
+            challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
         content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
         pdfkit.from_string(content_for_pdf, path_for_challan)
 
@@ -613,16 +619,39 @@ from email.message import EmailMessage
 
 def get_single_bill_download(id):
     try:
-        bill = Bill().get_one_bill(pk=id)
-        bill_serializer = BillSerializer(bill, many=False).data
-        file_content = str(bill_serializer)
-        f = open("bill24.text", "a")
-        f.write(file_content)
-        f.close()
-        f = open("bill24.text", "r")
-        pdfkit.from_file(f, 'bill24.pdf')
 
-        return Response.success("File has been downloaded")
+        list_challan = []
+        bill = Bill().get_one_bill(pk=id)
+
+        bill_serializer = BillSerializer(bill, many=False).data
+        total_price_bill = 0
+        for i in bill_serializer['challan']:
+            dict_challan_for_bill = {}
+            challan = dict(i)
+            challan_id = challan['id']
+            challan_quantity = challan['quantity']
+            dict_challan_for_bill.update({"challan_id": challan_id})
+            dict_challan_for_bill.update({"quantity": challan_quantity})
+            challan_order = dict(challan['order_detail'])
+
+            product = dict(challan_order['product'])
+            product_name = product['name']
+            product_price = product['unit_price']
+            dict_challan_for_bill.update({"product_name": product_name})
+            dict_challan_for_bill.update({"product_price": product_price})
+            challan_total = (challan_quantity * product_price)
+            dict_challan_for_bill.update({"challan_total": challan_total})
+            total_price_bill = total_price_bill + challan_total
+            list_challan.append(dict_challan_for_bill)
+
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/Bill/' + str(bill.company.name) + '_' + 'bill' + '_' + str(id) + '.pdf'
+
+        content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
+        pdfkit.from_string(content_for_pdf, path_for_challan)
+
+        # return Response.success("File has been downloaded")
+        return Response.create_data({"chalan": list_challan,
+                                     "bill_total": total_price_bill})
 
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -631,14 +660,16 @@ def get_single_bill_download(id):
 def get_single_bill_send_by_email(id):
     try:
         bill = Bill().get_one_bill(pk=id)
-        bill_serializer = BillSerializer(bill, many=False).data
-        content = str(bill_serializer)
-        subject = "Check attachment"
-        if SendEmail.send_email(reciever="ahsun45@gmail.com", attachment=True, name="PewBill", subject=subject,
+        content = "Please find the attached Bill"
+        subject = "Bill"
+        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/Bill/' + str(bill.company.name) + '_' + 'bill' + '_' + str(bill.id) + '.pdf'
+        name_file = str(bill.company.name) + '_' + 'bill' + '_' + str(bill.id) + '.pdf'
+        if SendEmail.send_email(reciever="m.affan@codexnow.com", attachment=True, name="PewBill", subject=subject,
                                 content=content,
-                                file_name="bill24.pdf"):
-            return Response.success("Bill sent on email")
-        return Response.error("Bill is not set on email yet")
+                                file_name=path_for_challan,
+                                name_file=name_file):
+            return Response.success("Bill successfully sent on email")
+        return Response.error("Error on sending Bill.")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -653,22 +684,26 @@ def delete_bill(id):
 
 def get_check_quantity(order_detail_id):
     try:
-        order_detail_obj = OrderDetail().get_one_order_detail(pk=order_detail_id)
-        total_quantity = order_detail_obj.quantity
+        if OrderDetail().check_order_detail_by_id(id=order_detail_id):
 
-        list_challan = Challan.get_all_challan_by_order_id(pk=order_detail_id)
-        total_quantity_sent = 0
+            order_detail_obj = OrderDetail().get_one_order_detail(pk=order_detail_id)
+            total_quantity = order_detail_obj.quantity
 
-        for item in list_challan:
-            total_quantity_sent = total_quantity_sent + item.quantity
+            list_challan = Challan.get_all_challan_by_order_id(pk=order_detail_id)
+            total_quantity_sent = 0
 
-        percentage = float((total_quantity_sent / total_quantity) * 100)
+            for item in list_challan:
+                total_quantity_sent = total_quantity_sent + item.quantity
 
-        dict_data = {"total_quantiy": total_quantity,
-                     "total_item_sent": total_quantity_sent,
-                     "percent_completed": percentage}
+            percentage = float((total_quantity_sent / total_quantity) * 100)
 
-        return Response.create_data(dict_data)
+            dict_data = {"total_quantiy": total_quantity,
+                         "total_item_sent": total_quantity_sent,
+                         "percent_completed": percentage}
+
+            return Response.create_data(dict_data)
+        return Response.error("The provided order_id is invalid")
 
     except Exception as err:
+        print(err)
         return Response.internal_server_error(str(err))
