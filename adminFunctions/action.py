@@ -5,10 +5,10 @@ import pdfkit
 
 import templates.challan_template
 from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, Challan, \
-    Bill, DeliveryRecord
+    Bill, DeliveryRecord, Contact
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
     PurchaseOrderSerializer, OrderDetailSerializer, BillSerializer, ChallanSerializer, \
-    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer
+    DeliveryRecordSerializer, PoStatsSerializer, ChallanStatsSerializer, BillStatsSerializer, ContactSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED, CHALLAN_NOT_UPDATED, \
@@ -422,21 +422,23 @@ def get_challan_registration_stats(start_date, end_date):
 
 def create_challan_act(data):
     try:
-        order_detail_obj = OrderDetail.get_one_order_detail(pk=data.get("order_detail"))
-        data["order_detail"] = order_detail_obj
-        challan = Challan().create_challan(data=data)
-        dic_ = {"order_detail": order_detail_obj,
-                "quantity_delivered": data.get("quantity")}
-        DeliveryRecord.create_delivery_record(dic_)
+        if OrderDetail().check_order_detail_by_id(id=id):
+            order_detail_obj = OrderDetail.get_one_order_detail(pk=data.get("order_detail"))
+            data["order_detail"] = order_detail_obj
+            challan = Challan().create_challan(data=data)
+            dic_ = {"order_detail": order_detail_obj,
+                    "quantity_delivered": data.get("quantity")}
+            DeliveryRecord.create_delivery_record(dic_)
 
-        product_name = challan.order_detail.product.name
-        path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(
-            challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
-        content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
-        pdfkit.from_string(content_for_pdf, path_for_challan)
+            product_name = challan.order_detail.product.name
+            path_for_challan = '/home/affansidd/Desktop/PewBill/adminFunctions/challan/' + str(
+                challan.order_detail.purchase_order.company.name) + '_' + 'challan' + '_' + str(challan.id) + '.pdf'
+            content_for_pdf = templates.challan_template.challan_template_func(product_name=product_name)
+            pdfkit.from_string(content_for_pdf, path_for_challan)
 
-        challan_serializer = ChallanSerializer(challan).data
-        return Response.create_data(challan_serializer)
+            challan_serializer = ChallanSerializer(challan).data
+            return Response.create_data(challan_serializer)
+        return Response.error("The provided order_id is invalid")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -706,4 +708,21 @@ def get_check_quantity(order_detail_id):
 
     except Exception as err:
         print(err)
+        return Response.internal_server_error(str(err))
+
+def get_all_contact(company_id):
+    try:
+        contact = Contact().get_all_contact(company_id=company_id)
+        contact_serializer = ContactSerializer(contact, many=True).data
+        return contact_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+def create_employee_contact(data):
+    try:
+        data['company'] = Company.get_one_company(pk=data.get('company'))
+        employee_contact = Contact.create_contact(data=data)
+        contact_serializer = ContactSerializer(employee_contact).data
+        return Response.create_data(contact_serializer)
+    except Exception as err:
         return Response.internal_server_error(str(err))

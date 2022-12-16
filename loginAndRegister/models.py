@@ -464,3 +464,21 @@ class DeliveryRecord(models.Model):
     @staticmethod
     def create_delivery_record(data):
         return DeliveryRecord.objects.create(**data)
+
+class Contact(models.Model):
+    name = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(null=False, unique=True)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        db_table = "Contact"
+
+    @staticmethod
+    def get_all_contact(company_id):
+        return Contact.objects.filter(company_id=company_id)
+
+    @staticmethod
+    def create_contact(data):
+        return Contact.objects.create(**data)
+
+

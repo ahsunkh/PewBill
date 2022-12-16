@@ -51,7 +51,6 @@ class CompanyGet(APIView):
 
             return Response.error(INVALID_DATA)
         except Exception as err:
-            # raise
             return Response.error(str(err))
 
 
@@ -268,7 +267,6 @@ class PurchaseOrderDetail(APIView):
                 return update_purchase_order_act(id=pk, request=request)
             return Response.error(INVALID_DATA)
         except Exception as err:
-            raise
             return Response.error(str(err))
 
     @staticmethod
@@ -313,7 +311,6 @@ class OrderDetailManagement(APIView):
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
                 return create_order_detail_act(data=request.data)
-
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
@@ -448,17 +445,6 @@ class ChallanDetail(APIView):
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
-
-    # @staticmethod
-    # def get(request, pk=None):
-    #
-    #     try:
-    #         user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
-    #         if user_id:
-    #             return get_single_challan(id=pk)
-    #         return Response.error(INVALID_DATA)
-    #     except Exception as err:
-    #         return Response.error(str(err))
 
     @staticmethod
     def delete(request, pk=None):
@@ -644,6 +630,32 @@ class OrderDetailCheckQuantity(APIView):
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
                 return get_check_quantity(order_detail_id=order_detail_id)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+class ContactManagement(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            company_id = request.GET.get('company_id')
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_all_contact(company_id=company_id))
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    # @content_type_validation
+    def post(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return create_employee_contact(data=request.data)
+
             return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))

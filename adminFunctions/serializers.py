@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from loginAndRegister.models import Company, Category, Product, PurchaseOrder, OrderDetail, Challan, Bill, \
-    DeliveryRecord
+    DeliveryRecord , Contact
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -93,3 +93,9 @@ class BillStatsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bill
         fields = ['created_at__date', 'count']
+
+class ContactSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)
+    class Meta:
+        model = Contact
+        fields = ['name', 'email', 'company']

@@ -49,7 +49,7 @@ urlpatterns = [
     path('check/quantity', views.OrderDetailCheckQuantity.as_view()),
 
 
-
+    path('employee/contact', views.ContactManagement.as_view()),
 
 
 
