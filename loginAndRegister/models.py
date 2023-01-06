@@ -416,6 +416,7 @@ class Bill(models.Model):
     def get_bill_with_challan():
         return Bill.objects.filter.prefetch_related('challan').all()
 
+    @staticmethod
     def get_total_bill_registration(start_date, end_date):
         return Bill.objects.values(
             'created_at__date').annotate(
@@ -435,7 +436,6 @@ class Bill(models.Model):
                 return True, bill
             except Exception as err:
                 return False, {}
-
         return False, {}
 
     @staticmethod
