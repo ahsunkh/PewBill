@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime , timedelta
 import os
 
 import pdfkit
@@ -608,7 +608,7 @@ def get_single_bill(id):
     try:
         bill_obj = Bill().get_one_bill(pk=id)
         payment_time = bill_obj.company.payment_terms
-        bill_date = datetime.strptime(bill_obj.bill_date, '%d/%m/%Y')
+        bill_date = datetime.strptime(bill_obj.bill_date, '%Y/%m/%d')
         bill_date_test = (bill_date +
                           timedelta(days=payment_time)).date()
         if datetime.now().date() == bill_date_test:
