@@ -606,9 +606,19 @@ def update_bill_act(id=None, request=None):
 
 def get_single_bill(id):
     try:
-        bill = Bill().get_one_bill(pk=id)
-        bill_serializer = BillSerializer(bill, many=False).data
-        print(BillSerializer(bill, many=False).field_name)
+        bill_obj = Bill().get_one_bill(pk=id)
+        payment_time = bill_obj.company.payment_terms
+        bill_date = datetime.strptime(bill_obj.bill_date, '%d/%m/%Y')
+        bill_date_test = (bill_date +
+                          timedelta(days=payment_time)).date()
+        if datetime.now().date() == bill_date_test:
+            payment_status = 1
+        if datetime.now().date() > bill_date_test:
+            payment_status = 2
+        if datetime.now().date() < bill_date_test:
+            payment_status = 0
+        bill_serializer = BillSerializer(bill_obj, many=False).data
+        bill_serializer.update({'payment_status':payment_status})
         return Response.create_data(bill_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
