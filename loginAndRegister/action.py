@@ -97,6 +97,13 @@ def verify_user_email_signin_otp(data):
     except Exception as err:
         return Response.internal_server_error(str(err))
 
+def get_user_info(user_id):
+    try:
+        user = Users.get_user_by_id(id=user_id)
+        user_serializer = UsersSerializer(user).data
+        return Response.create_data(created_data_response=user_serializer, status=SUCCESS_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
 
 def update_user(user_id=None, data=None):
     try:

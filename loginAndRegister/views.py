@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from loginAndRegister.action import user_signup_email, user_signin_email, verify_user_email_signin_otp, update_user, \
-    delete_user, logout_user, retrieve_po_data, user_forget_password, user_verify_forgot_otp, update_forget_password
+    delete_user, logout_user, retrieve_po_data, user_forget_password, user_verify_forgot_otp, update_forget_password, get_user_info
 from pewbill.responses import Response
 from pewbill.responsesdescription import INVALID_DATA
 from utilities.pewbill_jwt import PewBillJWT
@@ -48,6 +48,15 @@ class SigninEmailVerifyOTP(APIView):
 class UserUpdateDetail(APIView):
     permission_classes = [IsAuthenticated]
 
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_user_info(user_id=user_id)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
     @staticmethod
     def put(request):
         try:
