@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'xa*$w64aa*u4&e_d@m7=($uj_fu*yaq+!29)x_)ybqrx8m15g&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -107,7 +107,7 @@ if DEBUG:
             'NAME': 'pew_db',
             'USER': 'pew_user',
             'PASSWORD': 'pew_pass',
-            'HOST': "localhost",
+            'HOST': "3.110.210.16",
             'PORT': "5432"
         }
 }
@@ -118,7 +118,7 @@ else:
             'NAME': 'pew_db',
             'USER': 'pew_user',
             'PASSWORD': 'pew_pass',
-            'HOST': "192.168.100.193",
+            'HOST': "localhost",
             'PORT': "5432"
         }
     }
