@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 import datetime
+
 SHARD = os.environ["SHARD"]
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'xa*$w64aa*u4&e_d@m7=($uj_fu*yaq+!29)x_)ybqrx8m15g&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -85,9 +85,8 @@ TEMPLATES = [
         },
     },
 ]
-
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 WSGI_APPLICATION = 'pewbill.wsgi.application'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASS': [
@@ -101,19 +100,28 @@ REST_FRAMEWORK = {
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pewbill_db',
-        'USER': 'pew_user',
-        'PASSWORD': 'pew_pass',
-        'HOST': "localhost",
-        'PORT': 5432
-    }
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'pew_db',
+            'USER': 'pew_user',
+            'PASSWORD': 'pew_pass',
+            'HOST': "3.110.210.16",
+            'PORT': "5432"
+        }
 }
-
-
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'pew_db',
+            'USER': 'pew_user',
+            'PASSWORD': 'pew_pass',
+            'HOST': "localhost",
+            'PORT': "5432"
+        }
+    }
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -132,33 +140,31 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
+#
+# TIME_ZONE = 'UTC'
+#
+# USE_I18N = True
+#
+# USE_L10N = True
+#
+# USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
 
-JWT_ACCESS_TIME = 180
-JWT_REFRESH_TIME = 365
+JWT_ACCESS_TIME = 86400
+JWT_REFRESH_TIME = 86400
 OTP_EXPIRY_TIME = 60 * 24
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=JWT_ACCESS_TIME),
-    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=JWT_REFRESH_TIME),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(seconds=JWT_ACCESS_TIME),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(seconds=JWT_REFRESH_TIME),
     'ALGORITHM': 'HS512',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
@@ -173,5 +179,9 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 }
 
+# sendInBLue
 SEND_IN_BLUE_API_KEY = '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'
-SENDER_IN_BLUE = {"name": "Ahsun", "email": "ahsun45@gmail.com"}
+SENDER_IN_BLUE = {"name": "PEWBILL", "email": "ahsun45@gmail.com"}
+
+# ocr_space
+OCR_SPACE_API_KEY = 'K81452566188957'

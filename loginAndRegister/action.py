@@ -1,3 +1,5 @@
+import json
+import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from loginAndRegister.models import Roles, Users
@@ -7,10 +9,15 @@ from pewbill.responses import Response, ERROR_STATUS_CODE_CONFLICT, ERROR_STATUS
     ERROR_STATUS_CODE, ERROR_STATUS_CODE_NOT_FOUND
 from pewbill.responsesdescription import USER_ALREADY_EXISTS, USER_DOES_NOT_CREATED, INVALID_EMAIL_ADDRESS, \
     USER_DOES_NOT_EXIST, OTP_SENT_ON_EMAIl, TRY_AGAIN, USER_NOT_UPDATED, LOG_OUT_SUCCESSFULLY, TOKEN_NOT_VALID
+from pewbill.settings import OCR_SPACE_API_KEY
 from scripts.sendEmail import SendEmail
 from template.o_template import PewBillTemplate
+from utilities.helper_functions import get_po_data_for_k_electric, get_po_data_for_pel, get_po_data_for_elmetec, \
+    get_po_data_for_transfopower, get_po_data_for_skypower
 from utilities.otp import PewBillOTP
 from utilities.pewbill_jwt import PewBillJWT
+
+PDF_EXTENSION_LIST = ['PDF', 'pdf']
 
 
 def build_user_name(first_name, last_name):
@@ -29,13 +36,14 @@ def user_signup_email(data):
             return Response.error(error_response=USER_ALREADY_EXISTS, status=ERROR_STATUS_CODE_CONFLICT)
         password = generate_password_hash(data.get('password'))
         data["password"] = password
+        data['role'] = Roles.get_role_by_id(id=data.get('role'))
         user_name = build_user_name(first_name=data['first_name'], last_name=data['last_name'])
         data.update({"user_name": user_name})
         users = Users.create_email_user(data=data)
         if users:
-            return Response.success("user created")
+            user_serializer = UsersSerializer(users, many=False).data
+            return Response.create_data(user_serializer)
         return Response.error(error_response=USER_DOES_NOT_CREATED, status=ERROR_STATUS_CODE_FORBIDDEN)
-
     except Exception as err:
         return Response.internal_server_error(str(err))
 
@@ -64,10 +72,11 @@ def user_signin_email(data):
                 users.jwt_token.append(access)
                 users.save()
                 return Response.create_data(created_data_response=users_serializer, status=SUCCESS_STATUS_CODE)
-            return Response.error("invalid password")
+            return Response.error("invalid password or email")
         return Response.error(USER_DOES_NOT_EXIST)
 
     except Exception as err:
+        # raise
         return Response.internal_server_error(str(err))
 
 
@@ -88,14 +97,41 @@ def verify_user_email_signin_otp(data):
     except Exception as err:
         return Response.internal_server_error(str(err))
 
-
-def update_user(id=None, request=None):
+def get_user_info(user_id):
     try:
-        data = request.data
-        data.update({"id": id})
-        password = generate_password_hash(data.get('password'))
-        data["password"] = password
-        is_updated, user = Users.update_model_user(type=data)
+        user = Users.get_user_by_id(id=user_id)
+        user_serializer = UsersSerializer(user).data
+        return Response.create_data(created_data_response=user_serializer, status=SUCCESS_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+def update_user(user_id=None, data=None):
+    try:
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
+
+        if 'email' in data:
+            return Response.error(error_response="You can not update your email",
+                                  status=ERROR_STATUS_CODE)
+        if 'user_name' in data:
+            return Response.error(error_response="You can not update your username",
+                                  status=ERROR_STATUS_CODE)
+        if 'password' in data:
+            dict_a = {}
+            password = generate_password_hash(data.get('password'))
+            dict_a["password"] = password
+            is_updated, user = Users.update_model_user(id=user_id, update_data=dict_a)
+            if is_updated:
+                user_serializer = UsersSerializer(user).data
+                return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
+
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
+
+        is_updated, user = Users.update_model_user(id=user_id, update_data=data)
+
         if is_updated:
             user_serializer = UsersSerializer(user).data
             return Response.create_data(user_serializer, status=SUCCESS_STATUS_CODE)
@@ -104,21 +140,52 @@ def update_user(id=None, request=None):
         return Response.internal_server_error(str(err))
 
 
-def forget_password_action(data):
+def user_forget_password(data):
+    if Users.check_email_user(email=data["email"]):
+        send_otp = PewBillOTP().create_otp(data['email'])
+        content = PewBillTemplate().otp_mail_template_func(otp=send_otp)
+        if SendEmail().send_email(reciever=data["email"], subject="Forgot password",
+                                  content=content):
+            return Response.success("otp has been sent to your mail")
+        return Response.error("invalid email address")
+    return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_FORBIDDEN)
+
+
+def user_verify_forgot_otp(data):
     try:
-        user = Users.get_user_by_email(email=data.get('email'))
-        password = generate_password_hash(data['password'])
-        user.password = password
-        user.save()
-        user_serializer = UsersSerializer(user, many=False).data
-        return user_serializer
+        email_data = {"otp": data.get('otp'), "email": data.get('email')}
+        if PewBillOTP().verify_otp_email(data=email_data):
+            user = Users.get_user_by_email(email=data.get('email'))
+            access, refresh = PewBillJWT().create_jwt(user)
+            user_serializer = UsersSerializer(user).data
+            user_serializer.update({"token": access,
+                                    "refresh": str(refresh),
+                                    "platform": "email"})
+            user.save()
+        return Response.success("OTP has been Verified")
     except Exception as err:
         return Response.internal_server_error(str(err))
 
 
-def delete_user(id):
+def update_forget_password(data):
     try:
-        Users.delete_single_user(pk=id)
+        user = Users.get_user_by_email(email=data['email'])
+        password = generate_password_hash(data['new_password'])
+        user.password = password
+        user.save()
+        if user:
+            return Response.success("Password has been changed")
+        return Response.error("invalid email address")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def delete_user(user_id):
+    try:
+        user = Users.get_user_by_id(id=user_id)
+        if not user:
+            return Response.error(error_response=USER_DOES_NOT_EXIST, status=ERROR_STATUS_CODE_NOT_FOUND)
+        Users.delete_single_user(pk=user_id)
         return Response.success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -150,3 +217,104 @@ def add_roles_on_first_migrate():
         print("Some roles may not created please check")
     except Exception as e:
         print("Roles not created", e)
+
+
+def get_po_data_for_company_a(data):
+    try:
+        new_data = data['ParsedResults'][0]['TextOverlay']['Lines']
+        po_number = new_data[4]['LineText']
+        purchase_order_date = new_data[6]['LineText']
+        delivery_date = new_data[29]['LineText']
+        quantity = new_data[40]["LineText"]
+        # , new_data[49]["LineText"], new_data[54]["LineText"], new_data[60]["LineText"], new_data[66]["LineText"], new_data[72]["LineText"], new_data[78]["LineText"]
+        # total_amount = new_data[46]["LineText"], new_data[52]["LineText"], new_data[57]["LineText"], new_data[63][
+        #     "LineText"], new_data[69]["LineText"], new_data[75]["LineText"], new_data[81]["LineText"]
+        # for item in new_data:
+        # if item['LineText']['TOTAL'] == item['LineText']['ORDER TOTAL']:
+
+        # print(item['LineText'])
+        # print(item['LineText'])
+        # data_1=item['LineText']
+        # print(data_1)
+        # data_2=data_1['TOTAL']
+        # print(data_2)
+        # break
+        data = {"purchase_order_number": po_number[-7::],
+                "purchase_order_date": purchase_order_date,
+                "delivery_date": delivery_date}
+
+        # print(data)
+    except Exception as err:
+        # raise
+        po_number = data['ParsedResults'][0]['TextOverlay']['Lines'][4]['LineText']
+        purchase_order_date = data['ParsedResults'][0]['TextOverlay']['Lines'][6]['LineText']
+        data = {"purchase_order_number": po_number[-7::],
+                "purchase_order_date": purchase_order_date}
+        print(data)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_po_data_for_company_b(data):
+    try:
+        pass
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_po_data_for_company_c(data):
+    try:
+        print("CCCCCCCCCCCCCCCCCCCCCC")
+
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def ocr_function(purchase_order_file):
+    url = "https://api.ocr.space/parse/image"
+
+    payload = {'language': 'eng',
+               'isOverlayRequired': 'true',
+               'detectOrientation': 'true',
+               'isTable': 'true',
+               'OCREngine': '5'}
+    file_po = str(purchase_order_file).split('.')
+    ext = file_po[1]
+    if ext in PDF_EXTENSION_LIST:
+        files = [
+            ('purchase_order', (str(purchase_order_file), purchase_order_file.read(),
+                                'application/octet-stream'))
+        ]
+    else:
+        files = [
+            ('purchase_order', (str(purchase_order_file), purchase_order_file.read(), 'image/png'))
+        ]
+    headers = {
+        'apikey': OCR_SPACE_API_KEY
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+
+    return json.loads(response.text)
+
+
+def retrieve_po_data(request):
+    try:
+        company = (request.data.get('company'))
+        purchase_order = (request.FILES.get('purchase_order'))
+
+        json_purchase_order = ocr_function(purchase_order_file=purchase_order)
+
+        if company == 'K-Electric':
+            return Response.create_data(get_po_data_for_k_electric(data=json_purchase_order))
+        elif company == 'PEL':
+            return Response.create_data(get_po_data_for_pel(data=json_purchase_order))
+        elif company == 'Elmetec':
+            return Response.create_data(get_po_data_for_elmetec(data=json_purchase_order))
+        elif company == 'Transfopower':
+            return Response.create_data(get_po_data_for_transfopower(data=json_purchase_order))
+        elif company == 'Skypower':
+            return Response.create_data(get_po_data_for_skypower(data=json_purchase_order))
+
+    except Exception as err:
+        return Response.internal_server_error(str(err))
