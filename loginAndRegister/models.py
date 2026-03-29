@@ -12,9 +12,15 @@ class Roles(models.Model):
     role = models.CharField(max_length=50)
     details = models.TextField()
 
+    class Meta:
+        db_table = "Roles"
+
+    @staticmethod
+    def get_role_by_id(id=None):
+        return Roles.objects.get(id=id)
+
 
 class Users(models.Model):
-    id = models.CharField(primary_key=True, default=uuid.uuid4, editable=False, max_length=50)
     phone_number = models.CharField(max_length=15, default='')
     user_name = models.CharField(max_length=50)
     password = models.TextField(null=False, blank=False)
@@ -24,22 +30,27 @@ class Users(models.Model):
     customer_id = models.CharField(max_length=50, default='')
     jwt_token = ArrayField(
         models.TextField(), size=None, default=list)
-    role = models.ForeignKey(Roles, on_delete=models.CASCADE)
+    role = models.ForeignKey(Roles, on_delete=models.SET_NULL, null=True)
     status = models.BooleanField(blank=False, default=True)
     two_factor_auth = models.BooleanField(blank=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "Users"
 
     @staticmethod
     def get_user():
         try:
             return Users.objects.filter(role=2)
         except:
-            return None
+            return False
 
     @staticmethod
     def check_email_user(email=None):
         if email is not None:
             return Users.objects.filter(email=email).exists()
-        return None
+        return False
 
     @staticmethod
     def build_user_name(first_name, last_name):
@@ -60,11 +71,7 @@ class Users(models.Model):
 
     @staticmethod
     def create_email_user(data=None):
-        try:
-            if data is not None:
-                return Users.objects.create(**data)
-        except Exception as err:
-            return False
+        return Users.objects.create(**data)
 
     @staticmethod
     def get_user_by_email(email=None):
@@ -73,11 +80,11 @@ class Users(models.Model):
         return False
 
     @staticmethod
-    def update_model_user(type=None):
+    def update_model_user(id=None, update_data=None):
         if type is not None:
             try:
-                Users.objects.filter(id=type.get('id')).update(**type)
-                user = Users.objects.get(id=type.get('id'))
+                Users.objects.filter(id=id).update(**update_data)
+                user = Users.objects.get(id=id)
                 return True, user
             except Exception as err:
                 return False, {}
@@ -105,6 +112,11 @@ class Company(models.Model):
     logo = models.CharField(max_length=50, null=False, blank=False)
     phone = models.CharField(max_length=15, default='')
     email = models.EmailField(null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "Company"
 
     @staticmethod
     def get_company():
@@ -112,11 +124,7 @@ class Company(models.Model):
 
     @staticmethod
     def create_company(data):
-        try:
-            if data is not None:
-                return Company.objects.create(**data)
-        except:
-            return Response.error("invalid request")
+        return Company.objects.create(**data)
 
     @staticmethod
     def update_company(type=None):
@@ -131,12 +139,11 @@ class Company(models.Model):
 
     @staticmethod
     def get_one_company(pk):
-        company = Company.objects.get(pk=pk)
-        return company
+        return Company.objects.get(id=pk)
 
     @staticmethod
     def delete_single_company(pk):
-        company = Company.objects.get(pk=pk)
+        company = Company.objects.get(id=pk)
         company.delete()
 
 
@@ -144,17 +151,16 @@ class Category(models.Model):
     name = models.CharField(max_length=50, null=False, blank=False)
     description = models.CharField(max_length=200, null=False, blank=False)
 
+    class Meta:
+        db_table = "Category"
+
     @staticmethod
     def get_category():
         return Category.objects.all()
 
     @staticmethod
     def create_category(data):
-        try:
-            if data is not None:
-                return Category.objects.create(**data)
-        except:
-            return Response.error("invalid request")
+        return Category.objects.create(**data)
 
     @staticmethod
     def update_category(type=None):
@@ -169,19 +175,22 @@ class Category(models.Model):
 
     @staticmethod
     def get_one_category(pk):
-        category = Category.objects.get(pk=pk)
-        return category
+        return Category.objects.get(id=pk)
 
     @staticmethod
     def delete_single_category(pk):
-        category = Category.objects.get(pk=pk)
+        category = Category.objects.get(id=pk)
         category.delete()
 
 
 class Product(models.Model):
+    product_code = models.CharField(max_length=50, blank=False)
     name = models.CharField(max_length=50, null=False, blank=False)
-    unit_price = models.CharField(max_length=100, null=False, blank=False)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    unit_price = models.FloatField(blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        db_table = "Product"
 
     @staticmethod
     def get_product():
@@ -189,11 +198,7 @@ class Product(models.Model):
 
     @staticmethod
     def create_product(data):
-        try:
-            if data is not None:
-                return Product.objects.create(**data)
-        except:
-            return Response.error("invalid request")
+        return Product.objects.create(**data)
 
     @staticmethod
     def update_product(type=None):
@@ -208,22 +213,26 @@ class Product(models.Model):
 
     @staticmethod
     def get_one_product(pk):
-        product = Product.objects.get(pk=pk)
-        return product
+        return Product.objects.get(id=pk)
 
     @staticmethod
     def delete_single_product(pk):
-        product = Product.objects.get(pk=pk)
+        product = Product.objects.get(id=pk)
         product.delete()
 
 
 class PurchaseOrder(models.Model):
     purchase_order_number = models.CharField(null=False, blank=False, max_length=100)
     purchase_order_date = models.CharField(null=False, blank=False, max_length=100)
-    delivery_date = models.CharField(null=False, blank=False, max_length=100)
     quantity = models.IntegerField(default=0)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True)
-    total_amount = models.CharField(max_length=100, blank=True)
+    total_amount = models.DecimalField(max_digits=30, decimal_places=2)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "PurchaseOrder"
 
     @staticmethod
     def get_purchase_order():
@@ -234,8 +243,9 @@ class PurchaseOrder(models.Model):
         try:
             if data is not None:
                 return PurchaseOrder.objects.create(**data)
-        except:
-            return Response.error("invalid request")
+        except Exception as err:
+            print(err)
+            return {}
 
     @staticmethod
     def update_purchase_order(type=None):
@@ -250,40 +260,52 @@ class PurchaseOrder(models.Model):
 
     @staticmethod
     def get_one_purchase_order(pk):
-        purchase_order = PurchaseOrder.objects.get(pk=pk)
-        return purchase_order
+        return PurchaseOrder.objects.get(id=pk)
 
     @staticmethod
     def delete_single_purchase_order(pk):
-        purchase_order = PurchaseOrder.objects.get(pk=pk)
+        purchase_order = PurchaseOrder.objects.get(id=pk)
         purchase_order.delete()
 
 
-class OderDetail(models.Model):
+class OrderDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     price = models.FloatField()
-    quantity = models.CharField(max_length=100, blank=True)
-    date = models.DateTimeField(auto_now_add=True)
+    delivery_date = models.CharField(blank=True, max_length=100)
+    quantity = models.IntegerField(max_length=100, blank=True)
+    quantity = models.IntegerField()
+    is_delivered = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "OrderDetail"
+
+    @staticmethod
+    def get_order_details_by_po_no(pk):
+        print(pk)
+        order_details = OrderDetail.objects.filter(purchase_order=pk)
+        return order_details
 
     @staticmethod
     def get_order_detail():
-        return OderDetail.objects.all()
+        return OrderDetail.objects.all()
 
     @staticmethod
     def create_order_detail(data):
-        try:
-            if data is not None:
-                return OderDetail.objects.create(**data)
-        except:
-            return Response.error("invalid request")
+        return OrderDetail.objects.create(**data)
+
+    @staticmethod
+    def create_bulk_order_detail(data):
+        return OrderDetail.objects.bulk_create(OrderDetail(**value) for value in data)
 
     @staticmethod
     def update_order_detail(type=None):
         if type is not None:
             try:
-                OderDetail.objects.filter(id=type.get('id')).update(**type)
-                order_detail = OderDetail.objects.get(id=type.get('id'))
+                OrderDetail.objects.filter(id=type.get('id')).update(**type)
+                order_detail = OrderDetail.objects.get(id=type.get('id'))
                 return True, order_detail
             except Exception as err:
                 return False, {}
@@ -291,9 +313,109 @@ class OderDetail(models.Model):
 
     @staticmethod
     def get_one_order_detail(pk):
-        return OderDetail.objects.get(pk=pk)
+        return OrderDetail.objects.get(id=pk)
 
     @staticmethod
     def delete_single_order_detail(pk):
-        order_detail = OderDetail.objects.get(pk=pk)
+        order_detail = OrderDetail.objects.get(id=pk)
         order_detail.delete()
+
+
+class Challan(models.Model):
+    challan_date = models.CharField(null=False, blank=False, max_length=100)
+    # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    # purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True)
+    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
+    quantity = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "Challan"
+
+    @staticmethod
+    def get_challan():
+        return Challan.objects.all()
+
+    @staticmethod
+    def create_challan(data):
+        return Challan.objects.create(**data)
+
+    @staticmethod
+    def update_challan(type=None):
+        if type is not None:
+            try:
+                Challan.objects.filter(id=type.get('id')).update(**type)
+                challan = Challan.objects.get(id=type.get('id'))
+                return True, challan
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_challan(pk):
+        return Challan.objects.get(id=pk)
+
+    @staticmethod
+    def delete_single_challan(pk):
+        challan = Challan.objects.get(id=pk)
+        challan.delete()
+
+
+class Bill(models.Model):
+    bill_date = models.CharField(null=False, blank=False, max_length=100)
+    # product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
+    quantity = models.IntegerField(blank=True)
+    total_amount = models.DecimalField(max_digits=30, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "Bill"
+
+    @staticmethod
+    def get_bill():
+        return Bill.objects.all()
+
+    @staticmethod
+    def create_bill(data):
+        return Bill.objects.create(**data)
+
+    @staticmethod
+    def update_bill(type=None):
+        if type is not None:
+            try:
+                Bill.objects.filter(id=type.get('id')).update(**type)
+                bill = Bill.objects.get(id=type.get('id'))
+                return True, bill
+            except Exception as err:
+                return False, {}
+        return False, {}
+
+    @staticmethod
+    def get_one_bill(pk):
+        return Bill.objects.get(id=pk)
+
+    @staticmethod
+    def delete_single_bill(pk):
+        bill = Bill.objects.get(id=pk)
+        bill.delete()
+
+
+class DeliveryRecord(models.Model):
+    order_detail = models.ForeignKey(OrderDetail, on_delete=models.SET_NULL, null=True)
+    quantity_delivered = models.IntegerField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True)
+
+    class Meta:
+        db_table = "DeliveryRecord"
+
+    @staticmethod
+    def get_delivery_record():
+        return DeliveryRecord.objects.all()
+
+    @staticmethod
+    def create_delivery_record(data):
+        return DeliveryRecord.objects.create(**data)

@@ -7,3 +7,8 @@ werkzeug==2.2.2
 sib_api_v3_sdk==7.5.0
 pyotp==2.7.0
 paginator==0.5.1
+<<<<<<< HEAD
+requests==2.28.1
+=======
+pandas==1.5.1
+>>>>>>> acdad393953eeb23cdd3be7c233a4e4058196ff9

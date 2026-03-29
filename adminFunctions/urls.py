@@ -19,4 +19,24 @@ urlpatterns = [
 
     path('get/orderdetail', views.OderDetailGet.as_view()),
     path('oderdetail/detail/<pk>', views.OrderDetailDetail.as_view()),
+
+    path('retrieve/order_detail/<pk>', views.GetPurchaseOrderByON.as_view()),
+
+    path('get/challan', views.ChallanGet.as_view()),
+    path('challan/detail/<pk>', views.ChallanDetail.as_view()),
+
+    # path('get/challan', views.DeliveryRecord.as_view()),
+
+    path('get/bill', views.BillGet.as_view()),
+    path('bill/detail/<pk>', views.BillDetail.as_view()),
+
+
+
+
+
+
+
+
+
+
 ]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from loginAndRegister.models import Company, Category, Product, PurchaseOrder, OderDetail
+from loginAndRegister.models import Company, Category, Product, PurchaseOrder, OrderDetail, Challan, Bill
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -15,9 +15,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = ['id', 'product_code', 'name', 'unit_price', 'category']
 
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
@@ -25,12 +27,40 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PurchaseOrder
+        fields = ['id', 'purchase_order_number', 'purchase_order_date',
+                  'quantity', 'company', 'total_amount']
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    purchase_order = PurchaseOrderSerializer(read_only=True)
+
+    class Meta:
+        model = OrderDetail
         fields = "__all__"
 
 
-class OderDetailSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+class ChallanSerializer(serializers.ModelSerializer):
+    order_detail = OrderDetailSerializer(read_only=True)
 
     class Meta:
-        model = OderDetail
+        model = Challan
+        fields = "__all__"
+
+
+class BillSerializer(serializers.ModelSerializer):
+    # product = ProductSerializer(read_only=True)
+    purchase_order = PurchaseOrderSerializer(read_only=True)
+
+    class Meta:
+        model = Bill
+        fields = "__all__"
+
+
+class DeliveryRecordSerializer(serializers.ModelSerializer):
+    # product = ProductSerializer(read_only=True)
+    order_detail = OrderDetailSerializer(read_only=True)
+
+    class Meta:
+        model = Bill
         fields = "__all__"
