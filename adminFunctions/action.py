@@ -1,8 +1,9 @@
 # import Paginator as Paginator
 
-from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OderDetail
+from loginAndRegister.models import Company, Category, Product, Users, PurchaseOrder, OrderDetail, OrderDetail, Challan, \
+    Bill
 from adminFunctions.serializers import CompanySerializer, CategorySerializer, ProductSerializer, \
-    PurchaseOrderSerializer, OderDetailSerializer
+    PurchaseOrderSerializer, OrderDetailSerializer, OrderDetailSerializer, BillSerializer
 from loginAndRegister.serializers import UsersSerializer
 from pewbill.responses import Response, SUCCESS_STATUS_CODE, ERROR_STATUS_CODE
 from pewbill.responsesdescription import COMPANY_NOT_UPDATED, PRODUCT_NOT_UPDATED
@@ -241,8 +242,8 @@ def delete_purchase_order(id):
 
 def get_all_order_detail():
     try:
-        order_detail = OderDetail().get_order_detail()
-        order_detail_serializer = OderDetailSerializer(order_detail, many=True).data
+        order_detail = OrderDetail().get_order_detail()
+        order_detail_serializer = OrderDetailSerializer(order_detail, many=True).data
         return order_detail_serializer
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -250,8 +251,8 @@ def get_all_order_detail():
 
 def create_order_detail_act(data):
     try:
-        order_detail = OderDetail().create_order_detail(data=data)
-        order_detail_serializer = OderDetailSerializer(order_detail).data
+        order_detail = OrderDetail().create_order_detail(data=data)
+        order_detail_serializer = OrderDetailSerializer(order_detail).data
         return Response.create_data(order_detail_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -261,18 +262,19 @@ def update_order_detail_act(id=None, request=None):
     try:
         data = request.data
         data.update({"id": id})
-        is_updated, order_detail = OderDetail().update_order_detail(type=data)
+        is_updated, order_detail = OrderDetail().update_order_detail(type=data)
         if is_updated:
-            order_detail_serializer = OderDetailSerializer(order_detail).data
+            order_detail_serializer = OrderDetailSerializer(order_detail).data
             return Response.create_data(order_detail_serializer, status=SUCCESS_STATUS_CODE)
         return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
     except Exception as err:
         return Response.internal_server_error(str(err))
 
+
 def get_single_order_detail(id):
     try:
-        order_detail = OderDetail().get_one_order_detail(pk=id)
-        order_detail_serializer = OderDetailSerializer(order_detail, many=False).data
+        order_detail = OrderDetail().get_one_order_detail(pk=id)
+        order_detail_serializer = OrderDetailSerializer(order_detail, many=False).data
         return JsonResponse(order_detail_serializer)
     except Exception as err:
         return Response.internal_server_error(str(err))
@@ -280,7 +282,110 @@ def get_single_order_detail(id):
 
 def delete_order_detail(id):
     try:
-        OderDetail().delete_single_order_detail(pk=id)
+        OrderDetail().delete_single_order_detail(pk=id)
+        return Response.create_success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+""" Challan Action 
+    so it providing challan functions"""
+
+
+def get_all_challan():
+    try:
+        challan = Challan().get_challan()
+        challan_serializer = OrderDetailSerializer(challan, many=True).data
+        return challan_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def create_challan_act(data):
+    try:
+        challan = Challan().create_challan(data=data)
+        challan_serializer = OrderDetailSerializer(challan).data
+        return Response.create_data(challan_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def update_challan_act(id=None, request=None):
+    try:
+        data = request.data
+        data.update({"id": id})
+        is_updated, challan = Challan().update_challan(type=data)
+        if is_updated:
+            challan_serializer = OrderDetailSerializer(challan).data
+            return Response.create_data(challan_serializer, status=SUCCESS_STATUS_CODE)
+        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_single_challan(id):
+    try:
+        challan = Challan().get_one_challan(pk=id)
+        challan_serializer = OrderDetailSerializer(challan, many=False).data
+        return JsonResponse(challan_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def delete_challan(id):
+    try:
+        Challan().delete_single_challan(pk=id)
+        return Response.create_success("item has been deleted")
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+""" Bill Action 
+    so it providing Bill functions"""
+
+
+def get_all_bill():
+    try:
+        bill = Bill().get_bill()
+        bill_serializer = BillSerializer(bill, many=True).data
+        return bill_serializer
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def create_bill_act(data):
+    try:
+        bill = Bill().create_bill(data=data)
+        bill_serializer = BillSerializer(bill).data
+        return Response.create_data(bill_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def update_bill_act(id=None, request=None):
+    try:
+        data = request.data
+        data.update({"id": id})
+        is_updated, bill = Bill().update_bill(type=data)
+        if is_updated:
+            bill_serializer = BillSerializer(bill).data
+            return Response.create_data(bill_serializer, status=SUCCESS_STATUS_CODE)
+        return Response.error(error_response=PRODUCT_NOT_UPDATED, status=ERROR_STATUS_CODE)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+
+def get_single_bill(id):
+    try:
+        bill = Bill().get_one_bill(pk=id)
+        bill_serializer = BillSerializer(bill, many=False).data
+        return JsonResponse(bill_serializer)
+    except Exception as err:
+        return Response.internal_server_error(str(err))
+
+def delete_bill(id):
+    try:
+        Bill().delete_single_bill(pk=id)
         return Response.create_success("item has been deleted")
     except Exception as err:
         return Response.internal_server_error(str(err))

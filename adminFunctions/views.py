@@ -89,9 +89,6 @@ class CompanyDetail(APIView):
                 return delete_company(id=pk)
         except Exception as err:
             return Response.error(str(err))
-            return Response.error(INVALID_DATA)
-        except Exception as err:
-            return Response.error(str(err))
 
 
 class CategoryGet(APIView):
@@ -152,9 +149,6 @@ class CategoryDetail(APIView):
             user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
             if user_id:
                 return delete_category(id=pk)
-        except Exception as err:
-            return Response.error(str(err))
-            return Response.error(INVALID_DATA)
         except Exception as err:
             return Response.error(str(err))
 
@@ -219,9 +213,6 @@ class ProductDetail(APIView):
                 return delete_product(id=pk)
         except Exception as err:
             return Response.error(str(err))
-            return Response.error(INVALID_DATA)
-        except Exception as err:
-            return Response.error(str(err))
 
 
 class PurchaseOrderGet(APIView):
@@ -283,9 +274,6 @@ class PurchaseOrderDetail(APIView):
                 return delete_purchase_order(id=pk)
         except Exception as err:
             return Response.error(str(err))
-            return Response.error(INVALID_DATA)
-        except Exception as err:
-            return Response.error(str(err))
 
 
 class OderDetailGet(APIView):
@@ -338,7 +326,6 @@ class OrderDetailDetail(APIView):
         except Exception as err:
             return Response.error(str(err))
 
-
     @staticmethod
     def delete(request, pk=None):
         try:
@@ -347,6 +334,122 @@ class OrderDetailDetail(APIView):
                 return delete_order_detail(id=pk)
         except Exception as err:
             return Response.error(str(err))
+
+
+class ChallanGet(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_all_challan())
             return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def post(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return create_challan_act(data=request.data)
+
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class ChallanDetail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def put(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return update_challan_act(id=pk, request=request)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_challan(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def delete(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return delete_challan(id=pk)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class BillGet(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def get(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return Response.create_data(get_all_bill())
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def post(request):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return create_bill_act(data=request.data)
+
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+class BillDetail(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @staticmethod
+    def put(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return update_bill_act(id=pk, request=request)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+    @staticmethod
+    def get(request, pk=None):
+
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return get_single_bill(id=pk)
+            return Response.error(INVALID_DATA)
+        except Exception as err:
+            return Response.error(str(err))
+
+
+    @staticmethod
+    def delete(request, pk=None):
+        try:
+            user_id, token = PewBillJWT().parse_token(request.headers['Authorization'])
+            if user_id:
+                return delete_bill(id=pk)
         except Exception as err:
             return Response.error(str(err))
